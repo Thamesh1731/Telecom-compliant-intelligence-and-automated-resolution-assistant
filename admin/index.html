@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Portal | Telecom AI Triage System</title>
+  <meta name="description" content="Human Agent Portal for Telecom AI Complaint Triage - Exception Handling & High-Risk Ticket Resolution.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+  <!-- ADMIN LOGIN PORTAL OVERLAY -->
+  <div class="admin-login-overlay" id="admin-login-overlay">
+    <div class="login-background-grid"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    
+    <div class="login-card-container">
+      <div class="login-card-header">
+        <div class="cyber-badge">
+          <div class="cyber-shield-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span class="scanner-laser"></span>
+          </div>
+        </div>
+        <div class="login-title-group">
+          <h2 class="login-title">SignalCX</h2>
+          <p class="login-subtitle"><i class="fa-solid fa-lock"></i> RESTRICTED ADMIN ACCESS PORTAL</p>
+        </div>
+      </div>
+
+      <form id="admin-login-form" class="login-form">
+        <div class="security-level-pill">
+          <span class="pulse-dot green"></span>
+          <span id="login-clearance-label">LEVEL-2 AUTHORIZATION REQUIRED</span>
+        </div>
+
+        <div class="form-group-custom">
+          <label for="admin-username"><i class="fa-solid fa-user-shield"></i> Username or Agent ID</label>
+          <div class="input-wrapper">
+            <input type="text" id="admin-username" placeholder="Enter admin username..." required autocomplete="off">
+            <i class="fa-solid fa-id-card input-icon"></i>
+          </div>
+        </div>
+
+        <div class="form-group-custom">
+          <label for="admin-password"><i class="fa-solid fa-key"></i> Security Passcode</label>
+          <div class="input-wrapper">
+            <input type="password" id="admin-password" placeholder="Enter password..." required>
+            <button type="button" class="toggle-password-btn" id="toggle-password-btn" title="Show/Hide Password">
+              <i class="fa-solid fa-eye" id="password-eye-icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="login-feedback" id="login-feedback"></div>
+
+        <button type="submit" class="cyber-login-btn" id="login-submit-btn">
+          <span class="btn-glow"></span>
+          <i class="fa-solid fa-fingerprint"></i>
+          <span id="login-btn-text">AUTHENTICATE SYSTEM ACCESS</span>
+        </button>
+
+        <div class="login-footer-info">
+          <i class="fa-solid fa-circle-info"></i> Encrypted 256-bit AES Portal Protocol • Authorized Personnel Only
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Container -->
+  <div class="app-container locked" id="app-container">
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <i class="fa-solid fa-tower-cell"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">SignalCX</span>
+          <span class="brand-subtitle">AI Triage • Agent Portal</span>
+        </div>
+      </div>
+
+      <div class="agent-profile-card">
+        <div class="avatar" id="sidebar-avatar">
+          <i class="fa-solid fa-user-gear"></i>
+          <span class="status-indicator online"></span>
+        </div>
+        <div class="agent-info">
+          <span class="agent-name" id="sidebar-agent-name">System Administrator</span>
+          <span class="agent-role" id="sidebar-agent-role">Operations Director (L4)</span>
+          <span class="agent-id" id="sidebar-agent-id">ID: #ADM-0001</span>
+        </div>
+        <button class="logout-btn" id="logout-btn" title="Log Out Admin Session">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-section-label">MAIN WORKSPACE</div>
+        <button class="nav-btn active" data-tab="dashboard">
+          <i class="fa-solid fa-grid-2"></i>
+          <span>Agent Dashboard</span>
+          <span class="nav-badge alert" id="dash-escalated-count">8</span>
+        </button>
+
+        <button class="nav-btn" data-tab="my-queue">
+          <i class="fa-solid fa-inbox"></i>
+          <span>My Queue</span>
+          <span class="nav-badge primary" id="nav-queue-count">12</span>
+        </button>
+
+        <button class="nav-btn" data-tab="all-escalated">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Escalated Complaints</span>
+          <span class="nav-badge warning" id="nav-escalated-total">8</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="ai-status-pill">
+          <span class="pulse-dot"></span>
+          <span>AI Triage Engine Active</span>
+        </div>
+        <p class="system-quote">"AI handles routine volume. Humans handle exceptions."</p>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- Top Header Bar -->
+      <header class="top-header">
+        <div class="header-left">
+          <h1 class="page-title" id="page-title">Agent Dashboard</h1>
+          <span class="page-subtitle" id="page-subtitle">Immediate view of complaints requiring human intelligence</span>
+        </div>
+
+        <div class="header-right">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="global-search" placeholder="Search ticket #, customer, or keyword...">
+          </div>
+
+          <div class="filter-dropdown-wrapper">
+            <select id="priority-filter" class="filter-select">
+              <option value="all">All Priorities</option>
+              <option value="HIGH">High Priority</option>
+              <option value="MEDIUM">Medium Priority</option>
+              <option value="LOW">Low Priority</option>
+            </select>
+          </div>
+
+          <button class="icon-btn" id="refresh-btn" title="Refresh Queue">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB 1: AGENT DASHBOARD -->
+      <section class="tab-content active" id="tab-dashboard">
+        
+        <!-- Metrics / Summary Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card card-primary" data-filter-queue="all">
+            <div class="metric-header">
+              <span class="metric-label">Assigned to Me</span>
+              <div class="metric-icon"><i class="fa-solid fa-clipboard-user"></i></div>
+            </div>
+            <div class="metric-value" id="metric-assigned">12</div>
+            <div class="metric-footer">
+              <span class="trend neutral"><i class="fa-solid fa-layer-group"></i> Active Workload</span>
+            </div>
+          </div>
+
+          <div class="metric-card card-danger" data-filter-queue="high">
+            <div class="metric-header">
+              <span class="metric-label">High Priority</span>
+              <div class="metric-icon"><i class="fa-solid fa-fire"></i></div>
+            </div>
+            <div class="metric-value" id="metric-high">4</div>
+            <div class="metric-footer">
+              <span class="trend urgent"><i class="fa-solid fa-clock"></i> Requires Immediate Action</span>
+            </div>
+          </div>
+
+          <div class="metric-card card-warning" data-filter-queue="escalated">
+            <div class="metric-header">
+              <span class="metric-label">Escalated</span>
+              <div class="metric-icon"><i class="fa-solid fa-arrow-up-right-dots"></i></div>
+            </div>
+            <div class="metric-value" id="metric-escalated">8</div>
+            <div class="metric-footer">
+              <span class="trend warning"><i class="fa-solid fa-robot"></i> AI Confidence Below SLA</span>
+            </div>
+          </div>
+
+          <div class="metric-card card-info" data-filter-queue="aging">
+            <div class="metric-header">
+              <span class="metric-label">Due / Aging</span>
+              <div class="metric-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            </div>
+            <div class="metric-value" id="metric-aging">3</div>
+            <div class="metric-footer">
+              <span class="trend info"><i class="fa-solid fa-triangle-exclamation"></i> Approaching 2h Limit</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Escalated Complaints Action Table -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h2><i class="fa-solid fa-triangle-exclamation color-warning"></i> Escalated Complaints</h2>
+              <span class="badge badge-subtle">Requires Human Decision</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="view-all-queue-btn">
+              <span>View Full Queue</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="dashboard-tickets-table">
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Customer</th>
+                  <th>Issue Category</th>
+                  <th>AI Priority</th>
+                  <th>Risk Score</th>
+                  <th>Escalation Reason</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-tickets-body">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- TAB 2: MY QUEUE -->
+      <section class="tab-content" id="tab-my-queue">
+        
+        <div class="queue-overview-bar">
+          <div class="queue-tree-widget">
+            <div class="tree-node root">
+              <i class="fa-solid fa-folder-open"></i>
+              <span>My Assigned Queue (Total: <strong id="queue-tree-total">12</strong>)</span>
+            </div>
+            <div class="tree-branches">
+              <button class="branch-pill high active-filter" data-priority="HIGH">
+                <span class="dot"></span> High Priority: <strong id="queue-tree-high">4</strong>
+              </button>
+              <button class="branch-pill medium" data-priority="MEDIUM">
+                <span class="dot"></span> Medium: <strong id="queue-tree-med">6</strong>
+              </button>
+              <button class="branch-pill low" data-priority="LOW">
+                <span class="dot"></span> Low: <strong id="queue-tree-low">2</strong>
+              </button>
+              <button class="branch-pill reset" data-priority="ALL">
+                <i class="fa-solid fa-xmark"></i> Show All
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="table-responsive">
+            <table class="data-table" id="my-queue-table">
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Customer & Location</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>Risk</th>
+                  <th>Aging</th>
+                  <th>AI Summary Preview</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="my-queue-body">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- TAB 3: ALL ESCALATED -->
+      <section class="tab-content" id="tab-all-escalated">
+        <div class="section-card">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-list-check"></i> System-Wide Escalations</h2>
+            <div class="chip-filters">
+              <button class="chip active" data-filter="all">All</button>
+              <button class="chip" data-filter="low-confidence">Low AI Confidence</button>
+              <button class="chip" data-filter="repeat">Repeated Complaints</button>
+              <button class="chip" data-filter="high-risk">90%+ Risk</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="all-escalated-table">
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Customer</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>Risk Score</th>
+                  <th>Why Escalated</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="all-escalated-body">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- SLIDE-OVER DETAIL PANEL (Ticket Details) -->
+    <div class="detail-drawer-overlay" id="drawer-overlay"></div>
+    <aside class="detail-drawer" id="ticket-detail-drawer">
+      
+      <div class="drawer-header">
+        <div class="drawer-header-info">
+          <div class="ticket-badge-group">
+            <span class="ticket-number" id="drawer-ticket-id">#10291</span>
+            <span class="badge badge-high" id="drawer-priority-badge">HIGH PRIORITY</span>
+            <span class="badge badge-risk" id="drawer-risk-badge">RISK: 94%</span>
+          </div>
+          <h2 class="drawer-title" id="drawer-issue-title">Network Outage & Fiber Service Disruption</h2>
+        </div>
+        <button class="close-drawer-btn" id="close-drawer-btn" title="Close Panel">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+        
+        <!-- Section: Customer Complaint -->
+        <div class="drawer-card customer-card">
+          <div class="card-label">
+            <i class="fa-solid fa-user"></i>
+            <span>CUSTOMER COMPLAINT</span>
+          </div>
+          <div class="customer-meta">
+            <div class="meta-item">
+              <span class="meta-key">Customer:</span>
+              <span class="meta-val" id="drawer-customer-name">Robert Vance</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-key">Account:</span>
+              <span class="meta-val" id="drawer-account-id">#ACC-99214</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-key">Tier:</span>
+              <span class="meta-val badge-tier" id="drawer-customer-tier">Enterprise VIP</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-key">Location:</span>
+              <span class="meta-val" id="drawer-customer-location">Seattle - Sector 4B</span>
+            </div>
+          </div>
+          <blockquote class="complaint-text" id="drawer-complaint-text">
+            "My fiber internet has been down for over 6 hours during critical business operations. I've tried restarting the ONT terminal twice. Support chatbot kept asking generic questions. I demand immediate resolution or SLA refund!"
+          </blockquote>
+        </div>
+
+        <!-- Section: AI Analysis -->
+        <div class="drawer-card ai-analysis-card">
+          <div class="card-label color-ai">
+            <i class="fa-solid fa-brain"></i>
+            <span>AI ANALYSIS & CLASSIFICATION</span>
+          </div>
+
+          <div class="ai-grid">
+            <div class="ai-metric-box">
+              <span class="ai-box-label">Category</span>
+              <span class="ai-box-value" id="drawer-category">Network Outage</span>
+            </div>
+            <div class="ai-metric-box">
+              <span class="ai-box-label">Sentiment</span>
+              <span class="ai-box-value sentiment-negative" id="drawer-sentiment">Highly Frustrated (-0.89)</span>
+            </div>
+            <div class="ai-metric-box">
+              <span class="ai-box-label">Priority</span>
+              <span class="ai-box-value priority-high" id="drawer-priority">HIGH</span>
+            </div>
+            <div class="ai-metric-box">
+              <span class="ai-box-label">Escalation Risk</span>
+              <span class="ai-box-value risk-high" id="drawer-risk">94%</span>
+            </div>
+          </div>
+
+          <!-- Why Escalated? -->
+          <div class="escalation-reasons-box">
+            <div class="subheading"><i class="fa-solid fa-circle-question"></i> Why was this ticket escalated?</div>
+            <ul class="reason-list" id="drawer-escalation-reasons">
+              <li><i class="fa-solid fa-triangle-exclamation"></i> AI confidence score (62%) below mandatory human threshold (85%)</li>
+              <li><i class="fa-solid fa-repeat"></i> Repeated complaint detected (2nd report in 48 hours)</li>
+              <li><i class="fa-solid fa-crown"></i> High priority Enterprise VIP SLA account</li>
+              <li><i class="fa-solid fa-xmark"></i> No suitable automated self-healing script available for ONT fiber cut</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Section: AI Summary & Recommendation -->
+        <div class="drawer-card ai-recommendation-card">
+          <div class="card-label color-sparkles">
+            <i class="fa-solid fa-sparkles"></i>
+            <span>AI SUMMARY & RECOMMENDED ACTION</span>
+          </div>
+
+          <div class="summary-content">
+            <p><strong>AI Executive Summary:</strong></p>
+            <p class="summary-p" id="drawer-ai-summary">
+              Customer Robert Vance is experiencing severe fiber link loss in Sector 4B. Automated diagnostic telemetry shows optical signal loss (-32dBm) at local node TX-992. This correlates with an ongoing regional trenching incident by municipal contractors.
+            </p>
+          </div>
+
+          <div class="recommendation-box">
+            <p><strong>AI Recommended Resolution:</strong></p>
+            <div class="recommendation-text" id="drawer-ai-recommendation">
+              1. Confirm Node TX-992 regional outage status.<br>
+              2. Issue automated standard SLA credit ($45.00) to account.<br>
+              3. Dispatch emergency field repair team to Sector 4B node splice box.<br>
+              4. Send proactive SMS update with estimated ETR (2.5 hours).
+            </div>
+          </div>
+
+          <!-- RAG Sources / Knowledge Used -->
+          <div class="rag-sources-box">
+            <div class="subheading"><i class="fa-solid fa-book-bookmark"></i> Knowledge Used (RAG Sources):</div>
+            <div class="rag-tags" id="drawer-rag-sources">
+              <span class="rag-chip"><i class="fa-solid fa-file-pdf"></i> Network Troubleshooting Guide v4.2 (§3.1)</span>
+              <span class="rag-chip"><i class="fa-solid fa-shield-halved"></i> Enterprise VIP SLA Escalation Policy (2026)</span>
+              <span class="rag-chip"><i class="fa-solid fa-server"></i> Node TX-992 Telemetry Logs</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Previous Interactions & Timeline -->
+        <div class="drawer-card timeline-card">
+          <div class="card-label">
+            <i class="fa-solid fa-history"></i>
+            <span>PREVIOUS INTERACTIONS & TIMELINE</span>
+          </div>
+          <div class="timeline" id="drawer-timeline">
+            <!-- Dynamically Rendered -->
+          </div>
+        </div>
+
+        <!-- Section: Internal Agent Notes -->
+        <div class="drawer-card notes-card">
+          <div class="card-label">
+            <i class="fa-solid fa-note-sticky"></i>
+            <span>AGENT NOTES & INTERNAL HISTORY</span>
+          </div>
+          <div class="notes-list" id="drawer-notes-list">
+            <div class="note-item empty-note">No internal notes added yet.</div>
+          </div>
+          <div class="add-note-form">
+            <textarea id="new-note-text" placeholder="Type internal agent note here..." rows="2"></textarea>
+            <button class="btn btn-secondary btn-sm" id="add-note-btn"><i class="fa-solid fa-plus"></i> Add Note</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Drawer Footer Actions -->
+      <div class="drawer-footer">
+        <div class="action-buttons-group">
+          <button class="btn btn-success" id="action-resolve-btn">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Resolve Ticket</span>
+          </button>
+          
+          <button class="btn btn-warning" id="action-request-info-btn">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Request Info</span>
+          </button>
+
+          <button class="btn btn-danger" id="action-escalate-further-btn">
+            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            <span>Escalate Further</span>
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- MODAL FOR RESOLUTION / ACTION CONFIRMATION -->
+    <div class="modal-overlay" id="action-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="modal-title">Resolve Ticket</h3>
+          <button class="close-modal-btn" id="close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <p id="modal-description">Enter final resolution summary to present to customer and close this exception.</p>
+          <div class="form-group">
+            <label for="modal-response-text">Resolution Note / Response Message:</label>
+            <textarea id="modal-response-text" rows="4" placeholder="Enter resolution details..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="modal-category-select">Final Category Confirmation:</label>
+            <select id="modal-category-select" class="form-select">
+              <option value="Network">Network Issue</option>
+              <option value="Billing">Billing Discrepancy</option>
+              <option value="Service">Service / Account Request</option>
+              <option value="Hardware">Hardware Fault</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="modal-cancel-btn">Cancel</button>
+          <button class="btn btn-primary" id="modal-submit-btn">Confirm & Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION SYSTEM -->
+    <div class="toast-container" id="toast-container"></div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
