@@ -122,6 +122,13 @@
           <span>Escalated Complaints</span>
           <span class="nav-badge warning" id="nav-escalated-total">8</span>
         </button>
+
+        <div class="nav-section-label">FEEDBACK</div>
+        <button class="nav-btn" data-tab="negative-feedback">
+          <i class="fa-solid fa-comment-slash"></i>
+          <span>Negative Feedback</span>
+          <span class="nav-badge alert" id="nav-neg-feedback-count">0</span>
+        </button>
       </nav>
 
       <div class="sidebar-footer">
@@ -333,6 +340,40 @@
         </div>
       </section>
 
+      <!-- TAB 4: NEGATIVE FEEDBACK -->
+      <section class="tab-content" id="tab-negative-feedback">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h2><i class="fa-solid fa-comment-slash color-warning"></i> Negative Feedback Queue</h2>
+              <span class="badge badge-subtle">Customer-Reported Resolution Failures</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="refresh-neg-feedback-btn">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="neg-feedback-table">
+              <thead>
+                <tr>
+                  <th>Feedback ID</th>
+                  <th>Category</th>
+                  <th>Complaint Preview</th>
+                  <th>AI Solution Preview</th>
+                  <th>Customer Feedback</th>
+                  <th>Submitted</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="neg-feedback-body">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <!-- SLIDE-OVER DETAIL PANEL (Ticket Details) -->
@@ -533,6 +574,45 @@
         <div class="modal-footer">
           <button class="btn btn-outline" id="modal-cancel-btn">Cancel</button>
           <button class="btn btn-primary" id="modal-submit-btn">Confirm & Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEGATIVE FEEDBACK RESOLVE MODAL -->
+    <div class="modal-overlay" id="neg-feedback-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="neg-modal-title">Review Negative Feedback</h3>
+          <button class="close-modal-btn" id="close-neg-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+          <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; background: var(--surface-overlay); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+            <div>
+              <span style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Issue Category: </span>
+              <span id="neg-modal-category" style="font-weight: bold; color: var(--text-primary); margin-left: 6px;"></span>
+            </div>
+            <div id="neg-modal-subcategory-badge" style="font-size: 11px; color: var(--text-muted);"></div>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Complaint</label>
+            <div id="neg-modal-complaint" style="background: var(--surface-overlay); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: var(--text-primary); line-height: 1.5;"></div>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">AI-Generated Solution</label>
+            <div id="neg-modal-ai-solution" style="background: var(--surface-overlay); border: 1px solid var(--accent-cyan-dim); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: var(--text-primary); line-height: 1.5;"></div>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Feedback</label>
+            <div id="neg-modal-feedback" style="background: var(--surface-overlay); border: 1px solid var(--accent-red-dim); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: #f87171; line-height: 1.5;"></div>
+          </div>
+          <div class="form-group">
+            <label for="neg-modal-solution-text" style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Correct / Resolved Solution</label>
+            <textarea id="neg-modal-solution-text" rows="5" placeholder="Enter the correct resolution for this complaint..." style="margin-top: 6px;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="neg-modal-cancel-btn">Cancel</button>
+          <button class="btn btn-success" id="neg-modal-submit-btn"><i class="fa-solid fa-check"></i> Submit Resolved Solution</button>
         </div>
       </div>
     </div>

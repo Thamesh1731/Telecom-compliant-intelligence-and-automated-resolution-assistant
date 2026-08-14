@@ -47,11 +47,12 @@ embedding_model = SentenceTransformer(
 )
 
 
+from pathlib import Path
+
 print("Loading category classifier...")
 
-classifier = joblib.load(
-    r"F:\cts projecty\complaint_classifier_final.joblib"
-)
+classifier_path = Path(__file__).parent / "complaint_classifier_final.joblib"
+classifier = joblib.load(classifier_path)
 
 
 # ============================================================
@@ -747,6 +748,7 @@ def retrieve(
                 "category": metadata.get("category", ""),
                 "subcategory": metadata.get("subcategory", "") or metadata.get("document_title", "Unknown"),
                 "document_title": metadata.get("document_title", "Unknown"),
+                "file_name": metadata.get("file_name", ""),
                 "max_similarity": 0.0
             }
 
@@ -822,60 +824,55 @@ def retrieve(
         return []
 
     # --------------------------------------------------------
-    # LEVEL 3: ASSOCIATED KNOWLEDGE RETRIEVAL (Full doc chunks query)
+    # LEVEL 3: FULL ORIGINAL DOCUMENT RETRIEVAL
     # --------------------------------------------------------
 
-    all_chunks = []
+    retrieved_documents = []
+    kb_path = Path("knowledge_base")
+
     for doc in selected_docs:
         doc_id = doc["document_id"]
-        # Fetch all chunks of the selected document from ChromaDB
-        doc_results = collection.query(
-            query_embeddings=[query_embedding],
-            where={"document_id": doc_id},
-            n_results=20
-        )
+        meta = documents_meta.get(doc_id, {})
+        category = meta.get("category", "")
+        file_name = meta.get("file_name", "")
+        doc_title = doc.get("document_title", meta.get("document_title", "Unknown"))
 
-        if doc_results["documents"] and doc_results["documents"][0]:
-            for text, meta, dist in zip(
-                doc_results["documents"][0],
-                doc_results["metadatas"][0],
-                doc_results["distances"][0]
-            ):
-                all_chunks.append({
-                    "text": text,
-                    "metadata": meta,
-                    "distance": dist
-                })
+        full_text = ""
+        if category and file_name:
+            target_p = kb_path / category / file_name
+            if target_p.exists():
+                full_text = target_p.read_text(encoding="utf-8")
 
-    if not all_chunks:
-        print("\nNo chunks retrieved for the selected document(s).")
+        if not full_text:
+            matches = list(kb_path.rglob(f"*{doc_id}*.md"))
+            if matches:
+                full_text = matches[0].read_text(encoding="utf-8")
+
+        if full_text:
+            retrieved_documents.append({
+                "text": full_text,
+                "metadata": {
+                    "document_id": doc_id,
+                    "document_title": doc_title,
+                    "category": category,
+                    "subcategory": meta.get("subcategory", doc_title),
+                    "file_name": file_name,
+                    "is_ambiguous": str(is_ambiguous)
+                },
+                "is_ambiguous": is_ambiguous,
+                "final_score": doc.get("score", 0.0),
+                "text_similarity": meta.get("max_similarity", 0.0),
+                "subcategory_similarity": 0.0,
+                "intent_score": 0.0,
+                "category_compatibility": 0.0,
+                "distance": 0.0
+            })
+
+    if not retrieved_documents:
+        print("\nNo full document retrieved for the selected document(s).")
         return []
 
-    # Construct merged results dictionary
-    merged_results = {
-        "documents": [[c["text"] for c in all_chunks]],
-        "metadatas": [[c["metadata"] for c in all_chunks]],
-        "distances": [[c["distance"] for c in all_chunks]]
-    }
-
-    # Rerank chunks of selected document(s)
-    reranked = rerank_results(
-        query=query,
-        query_embedding=query_embedding,
-        results=merged_results,
-        detected_intent=detected_intent,
-        kb_category_probs=kb_category_probs
-    )
-
-    # Greedily diversify and select top_k chunks
-    retrieved = remove_duplicate_documents(reranked, top_k=top_k)
-
-    # Inject ambiguity metadata
-    for r in retrieved:
-        r["is_ambiguous"] = is_ambiguous
-        r["metadata"]["is_ambiguous"] = str(is_ambiguous)
-
-    return retrieved[:top_k]
+    return retrieved_documents
 
 
 # ============================================================

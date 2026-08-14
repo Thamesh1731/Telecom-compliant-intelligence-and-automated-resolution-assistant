@@ -3,264 +3,19 @@
  * Logic & Interactive Drawer / Queue Management
  */
 
-// Initial Seed Data: Escalated Complaints requiring Human Agent Attention
-let tickets = [
-  {
-    id: "#10291",
-    customer: "Robert Vance",
-    accountId: "#ACC-99214",
-    tier: "Enterprise VIP",
-    location: "Seattle - Sector 4B",
-    category: "Network",
-    issueSummary: "Fiber Link Disruption & High Packet Loss",
-    priority: "HIGH",
-    riskScore: 94,
-    aging: "1h 45m",
-    status: "ESCALATED",
-    assignedTo: "Sarah Connor (Agent #AGT-8824)",
-    complaintText: "My fiber internet has been completely down for over 6 hours during critical business operations. I've tried restarting the ONT terminal twice. Support chatbot kept asking generic reboot questions without routing to engineers. I demand immediate resolution or SLA breach refund!",
-    sentiment: "Highly Frustrated (-0.89)",
-    whyEscalated: [
-      "AI confidence score (62%) below mandatory human SLA threshold (85%)",
-      "Repeated complaint detected (2nd report in 48 hours)",
-      "High priority Enterprise VIP SLA account",
-      "No suitable automated self-healing script available for physical ONT fiber splice"
-    ],
-    aiSummary: "Customer Robert Vance is experiencing severe fiber link loss in Sector 4B. Automated diagnostic telemetry shows optical signal loss (-32dBm) at local node TX-992. This correlates with an ongoing regional trenching incident by municipal contractors.",
-    aiRecommendation: `1. Confirm Node TX-992 regional outage status with field ops.\n2. Issue automated standard SLA credit ($45.00) to account.\n3. Dispatch emergency field repair team to Sector 4B node splice box.\n4. Send proactive SMS update to customer with estimated ETR (2.5 hours).`,
-    ragSources: [
-      "Network Troubleshooting Guide v4.2 (§3.1)",
-      "Enterprise VIP SLA Escalation Policy (2026)",
-      "Node TX-992 Telemetry Logs"
-    ],
-    timeline: [
-      { time: "10:15 AM", event: "Ticket created via Mobile App & AI Triage Engine initialized" },
-      { time: "10:16 AM", event: "Automated Line Diagnostic executed: Signal Loss Detected (-32dBm)" },
-      { time: "10:17 AM", event: "AI flagged Risk Score 94% -> Auto-escalated to Human Queue (L2 Agent)" }
-    ],
-    notes: [
-      { text: "System check confirms municipal construction hit main fiber trunk on 4th Ave.", meta: "AI System • 10:20 AM" }
-    ]
-  },
-  {
-    id: "#10287",
-    customer: "Elena Rostova",
-    accountId: "#ACC-44109",
-    tier: "Business Pro",
-    location: "Austin - Sector 2A",
-    category: "Billing",
-    issueSummary: "Unrecognized Roaming Data Surcharge ($680)",
-    priority: "HIGH",
-    riskScore: 89,
-    aging: "2h 10m",
-    status: "ESCALATED",
-    assignedTo: "Sarah Connor (Agent #AGT-8824)",
-    complaintText: "I was billed $680 for international roaming while on a domestic flight between Dallas and Austin! I turned off roaming before takeoff. The automated billing system refused my refund dispute twice.",
-    sentiment: "Angry / Dispute (-0.82)",
-    whyEscalated: [
-      "Billing dispute amount ($680) exceeds AI auto-refund authorization cap ($100)",
-      "Customer escalation threat to regulatory agency (FCC)",
-      "High confidence AI rating of tower cell misallocation near international border corridor"
-    ],
-    aiSummary: "Customer was incorrectly connected to a transient maritime/satellite cellular relay tower during transit. CDR logs confirm device IP remained within domestic US airspace.",
-    aiRecommendation: `1. Revert $680 roaming surcharge from current billing cycle.\n2. Apply $20 goodwill bill credit for automated chatbot resolution loop.\n3. Flag Tower Relay #SAT-88 for RF cell boundary recalibration.`,
-    ragSources: [
-      "International Roaming & Border Buffer Policy v2.8",
-      "Automated Refund Limits Matrix (§4.1)"
-    ],
-    timeline: [
-      { time: "09:40 AM", event: "Billing Dispute Submitted by customer" },
-      { time: "09:42 AM", event: "AI CDR Log Analysis: Confirmed Domestic Airspace Flight Trajectory" },
-      { time: "09:45 AM", event: "Escalated to Human Agent due to $680 threshold limit" }
-    ],
-    notes: []
-  },
-  {
-    id: "#10276",
-    customer: "Marcus Chen",
-    accountId: "#ACC-77301",
-    tier: "Residential Gigabit",
-    location: "Chicago - Sector 1C",
-    category: "Service",
-    issueSummary: "eSIM Activation Failure & Provisioning Timeout",
-    priority: "MEDIUM",
-    riskScore: 81,
-    aging: "0h 50m",
-    status: "ESCALATED",
-    assignedTo: "Sarah Connor (Agent #AGT-8824)",
-    complaintText: "Purchased new iPhone 16 Pro and scanned QR code for eSIM transfer. Service line has been 'Activating...' for 14 hours with no cell signal. I cannot receive 2FA security codes for my bank.",
-    sentiment: "Anxious / Blocked (-0.75)",
-    whyEscalated: [
-      "HLR/HSS provisioning queue stuck in pending lock state",
-      "Customer unable to perform self-service 2FA verification"
-    ],
-    aiSummary: "EID profile mismatch detected between legacy physical SIM card registration and pending eSIM profile in HLR database.",
-    aiRecommendation: `1. Purge stale provisioning session in HLR Console.\n2. Re-issue fresh eSIM profile QR code to customer's registered email.\n3. Guide customer to restart device after profile download.`,
-    ragSources: [
-      "eSIM Provisioning & HLR Troubleshooting Manual",
-      "Device Migration Protocol 2026"
-    ],
-    timeline: [
-      { time: "11:05 AM", event: "eSIM Activation request initiated" },
-      { time: "11:20 AM", event: "Provisioning daemon timeout (Error Code ERR_HLR_LOCKED)" }
-    ],
-    notes: []
-  },
-  {
-    id: "#10264",
-    customer: "Sophia Al-Mansoor",
-    accountId: "#ACC-11982",
-    tier: "Business Pro",
-    location: "Miami - Sector 3",
-    category: "Hardware",
-    issueSummary: "5G Gateway Modem Firmware Boot Loop",
-    priority: "HIGH",
-    riskScore: 91,
-    aging: "3h 15m",
-    status: "ESCALATED",
-    assignedTo: "Sarah Connor (Agent #AGT-8824)",
-    complaintText: "After last night's remote firmware update, our corporate 5G Gateway power light keeps flashing red and rebooting every 90 seconds. Our retail store cannot process credit cards!",
-    sentiment: "Frustrated / Business Impact (-0.91)",
-    whyEscalated: [
-      "Firmware flash failure corrupted bootloader image",
-      "Critical POS payment terminal downtime"
-    ],
-    aiSummary: "5G Gateway Serial #GW-9948 bricked following firmware push v5.4.1. Remote factory reset commands failed due to unbootable kernel partition.",
-    aiRecommendation: `1. Authorize emergency same-day courier replacement gateway.\n2. Provide backup LTE dongle code for immediate POS connectivity.`,
-    ragSources: [
-      "Hardware Replacement SLA Policy",
-      "5G Gateway v5.4 Firmware Errata Note"
-    ],
-    timeline: [
-      { time: "08:30 AM", event: "Automated alert: Gateway #GW-9948 heartbeats missed" },
-      { time: "08:45 AM", event: "Customer reported boot loop via priority hotline" }
-    ],
-    notes: []
-  },
-  {
-    id: "#10255",
-    customer: "David Miller",
-    accountId: "#ACC-33829",
-    tier: "Residential Standard",
-    location: "Denver - Sector 5A",
-    category: "Network",
-    issueSummary: "Intermittent Ping Spikes in Gaming Traffic",
-    priority: "MEDIUM",
-    riskScore: 74,
-    aging: "4h 05m",
-    status: "ESCALATED",
-    assignedTo: "Sarah Connor (Agent #AGT-8824)",
-    complaintText: "Ping fluctuates from 20ms to 400ms every few minutes between 7 PM and 11 PM. Support bot ran traceroute and said lines are clean, but latency spikes remain constant.",
-    sentiment: "Dissatisfied (-0.62)",
-    whyEscalated: [
-      "Intermittent peak-hour bufferbloat requires manual QoS traffic shaper rule inspection"
-    ],
-    aiSummary: "Local neighborhood node DEN-05 experiencing 92% capacity utilization during peak gaming hours.",
-    aiRecommendation: `1. Adjust subscriber dynamic QoS profile to prioritize UDP gaming ports.\n2. Schedule node bandwidth upgrade for Sector 5A.`,
-    ragSources: [
-      "Peak Hour Traffic Shaper Ruleset",
-      "Node DEN-05 Utilization Metrics"
-    ],
-    timeline: [
-      { time: "07:15 AM", event: "Ticket logged via Web Portal" }
-    ],
-    notes: []
-  },
-  {
-    id: "#10240",
-    customer: "Amara Okezie",
-    accountId: "#ACC-88210",
-    tier: "Residential Gigabit",
-    location: "Atlanta - Sector 1A",
-    category: "Billing",
-    issueSummary: "Double Charge on Autopay Cycle",
-    priority: "MEDIUM",
-    riskScore: 78,
-    aging: "1h 10m",
-    status: "ESCALATED",
-    assignedTo: "Sarah Connor (Agent #AGT-8824)",
-    complaintText: "My credit card was charged twice ($89.99 x 2) on August 1st. Bank shows two identical pending merchant charges.",
-    sentiment: "Confused / Annoyed (-0.71)",
-    whyEscalated: [
-      "Autopay transaction batching duplicate anomaly requiring manual ledger correction"
-    ],
-    aiSummary: "Payment gateway batch glitch duplicated transaction #TXN-9918.",
-    aiRecommendation: `1. Void duplicate transaction #TXN-9918B.\n2. Send confirmation receipt to customer.`,
-    ragSources: [
-      "Payment Gateway Audit Protocol"
-    ],
-    timeline: [
-      { time: "10:45 AM", event: "Customer reported duplicate credit card charge" }
-    ],
-    notes: []
-  },
-  {
-    id: "#10231",
-    customer: "Jameson Blake",
-    accountId: "#ACC-66120",
-    tier: "Enterprise VIP",
-    location: "New York - Sector 8C",
-    category: "Service",
-    issueSummary: "Static IP Routing Drop on Corporate VPN",
-    priority: "HIGH",
-    riskScore: 96,
-    aging: "0h 35m",
-    status: "ESCALATED",
-    assignedTo: "Sarah Connor (Agent #AGT-8824)",
-    complaintText: "Static IPv4 subnet (64.210.12.0/28) stopped advertising via BGP to our secondary datacenter.",
-    sentiment: "Critical Emergency (-0.95)",
-    whyEscalated: [
-      "BGP route table drop impacting corporate IPsec tunnel",
-      "AI confidence low due to custom edge router configuration"
-    ],
-    aiSummary: "Upstream BGP peer dropped static subnet advertisement following maintenance window.",
-    aiRecommendation: `1. Re-issue BGP prefix advertisement command on Edge Router NY-CORE-02.\n2. Contact customer NOC with BGP session state status.`,
-    ragSources: [
-      "Enterprise BGP Routing Architecture Manual"
-    ],
-    timeline: [
-      { time: "11:20 AM", event: "High Priority BGP Drop Alert triggered" }
-    ],
-    notes: []
-  },
-  {
-    id: "#10219",
-    customer: "Claire DeWitt",
-    accountId: "#ACC-55291",
-    tier: "Residential Standard",
-    location: "San Jose - Sector 3B",
-    category: "Service",
-    issueSummary: "Plan Downgrade Request Not Applied",
-    priority: "LOW",
-    riskScore: 65,
-    aging: "5h 20m",
-    status: "ESCALATED",
-    assignedTo: "Sarah Connor (Agent #AGT-8824)",
-    complaintText: "I submitted a plan downgrade request last month from 1Gbps to 300Mbps, but my August bill still lists the 1Gbps rate.",
-    sentiment: "Mildly Annoyed (-0.45)",
-    whyEscalated: [
-      "Scheduled contract change date was set to mid-cycle instead of end-of-cycle"
-    ],
-    aiSummary: "Contract change order pending manual billing sync.",
-    aiRecommendation: `1. Adjust bill pro-rata for price difference ($30.00).\n2. Update billing cycle contract effective date.`,
-    ragSources: [
-      "Subscription Modification Rules"
-    ],
-    timeline: [
-      { time: "06:40 AM", event: "Ticket entered system" }
-    ],
-    notes: []
-  }
-];
+// Escalated Complaints array (Populated from backend API / real escalation requests)
+let tickets = [];
 
 // Active ticket state & current navigation filters
 let activeTicketId = null;
 let currentTab = 'dashboard';
 let currentFilterPriority = 'all';
+let negativeFeedbackItems = [];
+let activeNegFeedbackId = null;
 
 // Authorized Admin Personnel Registry (Only users with permission can enter)
 const AUTHORIZED_PERSONNEL = [
-  { username: 'admin', pass: 'admin123', name: 'System Administrator', role: 'Operations Director (L4)', id: '#ADM-0001' },
+  { username: 'admin', pass: 'admin', name: 'System Administrator', role: 'Operations Director (L4)', id: '#ADM-0001' },
   { username: 'sarah.connor', pass: 'nexus2026', name: 'Sarah Connor', role: 'L2 Senior Resolution Agent', id: '#AGT-8824' },
   { username: 'alex.mercer', pass: 'nexus2026', name: 'Alex Mercer', role: 'L3 System Administrator', id: '#SYS-9901' },
   { username: 'elena.vance', pass: 'nexus2026', name: 'Elena Vance', role: 'Tier 3 Incident Manager', id: '#AGT-4102' },
@@ -295,11 +50,49 @@ function initApp() {
     lockPortal();
   }
 
+  fetchTicketsFromBackend();
+  fetchNegativeFeedback();
+  setupEventListeners();
+}
+
+async function fetchTicketsFromBackend() {
+  try {
+    const res = await fetch('/api/admin/tickets');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.tickets && Array.isArray(data.tickets) && data.tickets.length > 0) {
+        tickets = data.tickets;
+      }
+    }
+  } catch (err) {
+    console.log('No backend tickets loaded yet:', err);
+  }
   renderDashboardTable();
   renderMyQueueTable();
   renderAllEscalatedTable();
   updateMetricsUI();
-  setupEventListeners();
+}
+
+async function fetchNegativeFeedback() {
+  try {
+    const res = await fetch('/api/admin/negative-feedback');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.items && Array.isArray(data.items)) {
+        negativeFeedbackItems = data.items;
+      }
+    }
+  } catch (err) {
+    console.log('No negative feedback loaded yet:', err);
+  }
+  renderNegativeFeedbackTable();
+  updateNegFeedbackBadge();
+}
+
+function updateNegFeedbackBadge() {
+  const count = negativeFeedbackItems.length;
+  const badge = document.getElementById('nav-neg-feedback-count');
+  if (badge) badge.innerText = count;
 }
 
 /**
@@ -391,7 +184,7 @@ function setupAuthEventListeners() {
       // Check credentials strictly against authorized personnel registry
       const matchedAccount = AUTHORIZED_PERSONNEL.find(a => 
         a.username.toLowerCase() === usernameInput.toLowerCase() && 
-        (a.pass === passwordInput || passwordInput === 'admin123' || passwordInput === 'nexus2026')
+        a.pass === passwordInput
       );
 
       // Trigger Cyber Scanning visual
@@ -734,6 +527,10 @@ function setupEventListeners() {
       } else if (tabId === 'all-escalated') {
         document.getElementById('page-title').innerText = 'All System Escalations';
         document.getElementById('page-subtitle').innerText = 'Full registry of automated exception triage cases';
+      } else if (tabId === 'negative-feedback') {
+        document.getElementById('page-title').innerText = 'Negative Feedback Queue';
+        document.getElementById('page-subtitle').innerText = 'Customer-reported resolution failures awaiting technician review';
+        fetchNegativeFeedback();
       }
     });
   });
@@ -887,10 +684,8 @@ function setupEventListeners() {
 }
 
 function refreshAllViews() {
-  renderDashboardTable();
-  renderMyQueueTable();
-  renderAllEscalatedTable();
-  updateMetricsUI();
+  fetchTicketsFromBackend();
+  fetchNegativeFeedback();
 }
 
 function filterTablesBySearch(query) {
@@ -968,3 +763,139 @@ function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
+
+
+// ====================================================================
+// NEGATIVE FEEDBACK MODULE
+// ====================================================================
+
+function renderNegativeFeedbackTable() {
+  const tbody = document.getElementById('neg-feedback-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (negativeFeedbackItems.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-muted);">No negative feedback items pending. All resolutions accepted by customers!</td></tr>`;
+    return;
+  }
+
+  negativeFeedbackItems.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => openNegativeFeedbackDetail(item.feedback_id);
+
+    const categoryText = item.category || 'General';
+    const complaintPreview = item.complaint && item.complaint.length > 50
+      ? item.complaint.substring(0, 50) + '...'
+      : (item.complaint || 'N/A');
+    const solutionPreview = item.ai_solution && item.ai_solution.length > 50
+      ? item.ai_solution.substring(0, 50) + '...'
+      : (item.ai_solution || 'N/A');
+    const feedbackPreview = item.feedback && item.feedback.length > 50
+      ? item.feedback.substring(0, 50) + '...'
+      : (item.feedback || 'N/A');
+
+    const submittedDate = item.submitted_at
+      ? new Date(item.submitted_at).toLocaleString()
+      : 'Unknown';
+
+    tr.innerHTML = `
+      <td><span class="ticket-id">${escapeHtml(item.feedback_id)}</span></td>
+      <td><span class="category-badge"><i class="fa-solid ${getCategoryIcon(categoryText)}"></i> ${escapeHtml(categoryText)}</span></td>
+      <td><span class="reason-pill" title="${escapeHtml(item.complaint)}">${escapeHtml(complaintPreview)}</span></td>
+      <td><span class="reason-pill" title="${escapeHtml(item.ai_solution)}">${escapeHtml(solutionPreview)}</span></td>
+      <td><span class="reason-pill" style="color: #f87171;" title="${escapeHtml(item.feedback)}">${escapeHtml(feedbackPreview)}</span></td>
+      <td><span class="badge badge-subtle"><i class="fa-solid fa-clock"></i> ${escapeHtml(submittedDate)}</span></td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openNegativeFeedbackDetail('${escapeHtml(item.feedback_id)}')">
+          <i class="fa-solid fa-wrench"></i> Review & Resolve
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openNegativeFeedbackDetail(feedbackId) {
+  const item = negativeFeedbackItems.find(i => i.feedback_id === feedbackId);
+  if (!item) return;
+
+  activeNegFeedbackId = feedbackId;
+
+  const categoryText = item.category || 'General';
+  const subcategoryText = item.subcategory ? `Subcategory: ${item.subcategory}` : '';
+
+  document.getElementById('neg-modal-title').innerText = `Review: ${feedbackId}`;
+  
+  const catEl = document.getElementById('neg-modal-category');
+  if (catEl) {
+    catEl.innerHTML = `<i class="fa-solid ${getCategoryIcon(categoryText)}"></i> ${escapeHtml(categoryText)}`;
+  }
+  const subcatEl = document.getElementById('neg-modal-subcategory-badge');
+  if (subcatEl) {
+    subcatEl.innerText = subcategoryText;
+  }
+
+  document.getElementById('neg-modal-complaint').innerText = item.complaint || 'N/A';
+  document.getElementById('neg-modal-ai-solution').innerText = item.ai_solution || 'N/A';
+  document.getElementById('neg-modal-feedback').innerText = item.feedback || 'N/A';
+  document.getElementById('neg-modal-solution-text').value = '';
+
+  document.getElementById('neg-feedback-modal').classList.add('active');
+}
+
+function closeNegFeedbackModal() {
+  document.getElementById('neg-feedback-modal').classList.remove('active');
+  activeNegFeedbackId = null;
+}
+
+async function submitResolvedSolution() {
+  if (!activeNegFeedbackId) return;
+
+  const solutionText = document.getElementById('neg-modal-solution-text').value.trim();
+  if (!solutionText) {
+    showToast('Please enter the correct resolution before submitting.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/resolve-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feedback_id: activeNegFeedbackId,
+        resolved_solution: solutionText
+      })
+    });
+
+    if (res.ok) {
+      showToast(`Feedback ${activeNegFeedbackId} resolved and stored in resolver base.`, 'success');
+      // Remove from local list
+      negativeFeedbackItems = negativeFeedbackItems.filter(i => i.feedback_id !== activeNegFeedbackId);
+      closeNegFeedbackModal();
+      renderNegativeFeedbackTable();
+      updateNegFeedbackBadge();
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      showToast(errData.detail || 'Failed to submit resolution.', 'danger');
+    }
+  } catch (err) {
+    showToast('Network error submitting resolution.', 'danger');
+  }
+}
+
+// Wire up negative feedback modal events after DOM load
+document.addEventListener('DOMContentLoaded', () => {
+  const closeBtn = document.getElementById('close-neg-modal-btn');
+  const cancelBtn = document.getElementById('neg-modal-cancel-btn');
+  const submitBtn = document.getElementById('neg-modal-submit-btn');
+  const refreshBtn = document.getElementById('refresh-neg-feedback-btn');
+
+  if (closeBtn) closeBtn.addEventListener('click', closeNegFeedbackModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeNegFeedbackModal);
+  if (submitBtn) submitBtn.addEventListener('click', submitResolvedSolution);
+  if (refreshBtn) refreshBtn.addEventListener('click', () => {
+    showToast('Refreshing negative feedback queue...', 'info');
+    fetchNegativeFeedback();
+  });
+});
