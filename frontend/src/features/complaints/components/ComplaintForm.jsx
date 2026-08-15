@@ -57,13 +57,8 @@ export default function ComplaintForm() {
       const data = await submitComplaintTicket(formData);
       setResult(data);
     } catch (err) {
-      if (err.message && err.message.toLowerCase().includes("failed to fetch")) {
-        setError(
-          "Unable to connect to the resolution service. Please ensure the backend is running and try again."
-        );
-      } else {
-        setError(err.message || "An unexpected error occurred. Please try again.");
-      }
+      console.error("Submission Error:", err);
+      setError(`Connection Error: ${err.message || "Failed to fetch"}.`);
     } finally {
       setIsSubmitting(false);
     }
