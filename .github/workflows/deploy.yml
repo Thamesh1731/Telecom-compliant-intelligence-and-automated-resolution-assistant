@@ -29,7 +29,7 @@ jobs:
 
       - name: Build React Application
         env:
-          VITE_API_BASE_URL: "http://${{ secrets.EC2_HOST }}:8000"
+          VITE_API_BASE_URL: "http://54.91.159.187:8000"
         run: |
           cd frontend
           npm run build
