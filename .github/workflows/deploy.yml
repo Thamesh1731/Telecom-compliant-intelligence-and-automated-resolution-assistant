@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - 'feature/**'
 
 jobs:
   deploy-frontend-s3:
@@ -58,7 +59,8 @@ jobs:
           port: 22
           script: |
             cd ~/Telecom-compliant-intelligence-and-automated-resolution-assistant
-            git pull origin main || git pull origin master
+            git fetch origin
+            git reset --hard origin/feature/add-email-and-widescreen-dashboard || git pull origin main
             source .venv/bin/activate
             pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
             pip install --no-cache-dir -r requirements.txt
