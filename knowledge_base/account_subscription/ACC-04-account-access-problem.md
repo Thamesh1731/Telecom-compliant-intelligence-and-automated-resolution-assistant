@@ -181,8 +181,10 @@ The issue may be resolved by:
 Escalate when:
 
 - Account recovery repeatedly fails.
+- Verification codes cannot be delivered despite correct information.
 - Account records appear inconsistent.
 - The account remains locked and requires manual intervention.
+- The customer cannot complete identity verification.
 - Multiple customers experience simultaneous login failures.
 - Provider authentication systems appear unavailable.
 - Manual account correction is required.

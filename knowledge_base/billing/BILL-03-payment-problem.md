@@ -150,6 +150,7 @@ Escalate when:
 - The payment cannot be located using available account information.
 - The payment appears to have been applied incorrectly.
 - The customer was charged but the payment remains missing.
+- A payment was duplicated.
 - AutoPay repeatedly fails despite valid payment information.
 - A payment correction requires manual account investigation.
 - The issue could result in inappropriate service suspension or a

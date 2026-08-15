@@ -180,6 +180,7 @@ Escalate when:
 - The customer provides evidence contradicting the current billing
   record.
 - The dispute involves multiple billing periods.
+- The issue involves suspected unauthorized activity or fraud.
 - The customer repeatedly reports the same unresolved billing dispute.
 
 ## Agent Guidance

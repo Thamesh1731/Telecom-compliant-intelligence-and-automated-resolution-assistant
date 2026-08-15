@@ -1,11 +1,22 @@
 """
 model_server.py
 
-Provides the complaint-to-resolution pipeline used by the FastAPI backend.
-The request scheduler in request_queue.py controls when this pipeline runs.
+Loads ALL models exactly once (embedding model, complaint classifier,
+cross-encoder reranker, Groq client) and keeps them resident in memory
+behind a persistent HTTP server.
+
+Run this FIRST, and leave it running:
+    python model_server.py
+
+Then in a separate terminal, run the client as many times as you like:
+    python main.py
 """
 
+import re
 import uuid
+import json
+from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from retriever import (
     retrieve,
@@ -67,3 +78,55 @@ def handle_new_complaint(complaint_text, predicted_category=None):
 
 
 
+
+# ============================================================
+# HTTP SERVER — keeps all models resident, handles /query and /feedback
+# ============================================================
+
+class RAGFeedbackHandler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass  # suppress default request logging, keep terminal clean
+
+    def _send_json(self, status, payload):
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(payload).encode('utf-8'))
+
+    def do_POST(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length)
+
+        try:
+            data = json.loads(post_data.decode('utf-8'))
+        except Exception:
+            self._send_json(400, {"error": "Invalid JSON"})
+            return
+
+        if self.path == '/query':
+            complaint = data.get("complaint")
+            if not complaint:
+                self._send_json(400, {"error": "Missing complaint parameter"})
+                return
+            res = handle_new_complaint(complaint)
+            self._send_json(200, res)
+
+
+
+        else:
+            self._send_json(404, {"error": "Unknown endpoint"})
+
+
+def run_server(port=8000):
+    server = HTTPServer(('127.0.0.1', port), RAGFeedbackHandler)
+    print(f"\nAll models loaded. RAG+LLM Model Server running on http://127.0.0.1:{port}")
+    print("Leave this running, then use 'python main.py' in another terminal.\n")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nShutting down server...")
+        server.server_close()
+
+
+if __name__ == "__main__":
+    run_server()

@@ -192,6 +192,7 @@ After the change, verify that the updated information appears correctly.
 
 Escalate when:
 
+- The customer cannot complete required identity verification.
 - The account does not allow the requested change.
 - The change was accepted but the account information remains incorrect.
 - Account records contain conflicting information.
