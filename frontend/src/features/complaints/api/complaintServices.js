@@ -35,10 +35,18 @@ export const submitComplaintTicket = async (formData) => {
   return response.json();
 };
 
+export const getComplaintStatus = async (complaintId) => {
+  const response = await fetch(`${API_BASE_URL}/api/complaints/${complaintId}`);
+  if (!response.ok) {
+    throw new Error("Unable to retrieve complaint status.");
+  }
+  return response.json();
+};
+
 /**
  * Submit negative feedback when the AI solution did not resolve the issue.
  *
- * @param {Object} data - { complaint_id, complaint, ai_solution, feedback }
+ * @param {Object} data - { complaint_id, complaint, ai_solution, feedback, email }
  * @returns {Promise<Object>} - Confirmation from backend
  */
 export const submitNegativeFeedback = async (data) => {

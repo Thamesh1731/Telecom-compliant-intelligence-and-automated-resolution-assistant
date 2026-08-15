@@ -9,11 +9,11 @@ Features:
 5. Resolver Base storage for technician-provided solutions.
 """
 
-import os
 import sys
 import uuid
 import re
 import json
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -37,17 +37,18 @@ if str(_PROJECT_ROOT) not in sys.path:
 # ---------------------------------------------------------------------------
 # Import Model Server Logic & Pipelines
 # ---------------------------------------------------------------------------
-import model_server
-from model_server import (
-    handle_new_complaint,
-)
+from model_server import handle_new_complaint
+from email_service import send_resolution_email
 from resolver_retriever import store_resolver_solution, resolver_solution_count
+from request_queue import ComplaintRequestQueue, classify_request
 
 # ---------------------------------------------------------------------------
 # Global State
 # ---------------------------------------------------------------------------
 ESCALATED_TICKETS: List[Dict[str, Any]] = []
 NEGATIVE_FEEDBACK_ITEMS: List[Dict[str, Any]] = []
+COMPLAINT_REQUESTS: Dict[str, Dict[str, Any]] = {}
+RESOLUTION_LOCK = threading.Lock()
 
 # Resolver Base paths
 RESOLVER_BASE = _PROJECT_ROOT / "resolver_base"
@@ -117,15 +118,12 @@ class NegativeFeedbackRequest(BaseModel):
     subcategory: Optional[str] = "General"
     ai_solution: str
     feedback: str
+    email: Optional[str] = ""
 
 
 class ResolveFeedbackRequest(BaseModel):
     feedback_id: str
     resolved_solution: str
-
-
-class SimpleQueryRequest(BaseModel):
-    complaint: str
 
 
 # ---------------------------------------------------------------------------
@@ -171,6 +169,74 @@ def generate_ticket_id() -> str:
     return f"TCK-{today}-{suffix}"
 
 
+def _process_queued_complaint(job: Dict[str, Any]) -> None:
+    """Run one queued complaint through resolver/RAG/LLM and save its result."""
+    complaint_id = job["complaint_id"]
+    complaint_text = job["complaint"]
+    request_data = job["request"]
+    COMPLAINT_REQUESTS[complaint_id]["status"] = "PROCESSING"
+
+    try:
+        res = handle_new_complaint(complaint_text)
+        if not res or not res.get("found"):
+            raise RuntimeError("No matching knowledge found for this complaint.")
+
+        solution = res.get("solution", "")
+        category = res.get("category", "General")
+        subcategory = res.get("subcategory", "General")
+        source = res.get("source", "llm_kb")
+        escalation_required, escalation_reason = check_escalation(complaint_text, solution)
+        ticket_id = job["ticket_id"]
+
+        ticket_data = {
+            "id": ticket_id,
+            "customer": request_data.get("filingOnBehalf") == "Yes" and "Representative Filing" or "Customer Submission",
+            "accountId": f"#ACC-{str(uuid.uuid4().int)[:5]}",
+            "tier": "Residential / Business",
+            "location": f"{request_data.get('city') or 'Unknown'} - {request_data.get('state') or 'Sector'}",
+            "category": category,
+            "issueSummary": complaint_text[:60] + "..." if len(complaint_text) > 60 else complaint_text,
+            "priority": "HIGH" if escalation_required else "MEDIUM",
+            "riskScore": 92 if escalation_required else 65,
+            "aging": "Just now",
+            "status": "ESCALATED" if escalation_required else "RESOLVED",
+            "assignedTo": "Sarah Connor (Agent #AGT-8824)",
+            "complaintText": complaint_text,
+            "sentiment": f"Source: {source}",
+            "whyEscalated": [escalation_reason] if escalation_reason else ["Automated processing complete"],
+            "aiSummary": f"Source: {source}. Category: {category}/{subcategory}",
+            "aiRecommendation": solution,
+            "ragSources": [f"{category} Knowledge Base"],
+            "timeline": [{"time": datetime.now().strftime("%I:%M %p"), "event": f"Processed via {source}"}],
+            "notes": [],
+        }
+        if escalation_required:
+            ESCALATED_TICKETS.append(ticket_data)
+
+        COMPLAINT_REQUESTS[complaint_id].update({
+            "success": True,
+            "found": True,
+            "source": source,
+            "category": category,
+            "subcategory": subcategory,
+            "solution": solution,
+            "resolution": solution,
+            "escalationRequired": escalation_required,
+            "escalationReason": escalation_reason,
+            "matches": res.get("matches", []),
+            "status": ticket_data["status"],
+        })
+    except Exception as exc:
+        COMPLAINT_REQUESTS[complaint_id].update({
+            "success": False,
+            "status": "FAILED",
+            "error": str(exc),
+        })
+
+
+complaint_queue = ComplaintRequestQueue(_process_queued_complaint)
+
+
 # ---------------------------------------------------------------------------
 # API Routes
 # ---------------------------------------------------------------------------
@@ -179,81 +245,64 @@ async def health():
     return {
         "status": "ok",
         "version": "3.0.0",
-        "resolver_solutions_count": resolver_solution_count()
+        "resolver_solutions_count": resolver_solution_count(),
+        "request_queue": complaint_queue.snapshot(),
     }
 
 
-@app.post("/api/complaints")
-@app.post("/query")
+@app.get("/api/admin/queue-status")
+async def get_queue_status():
+    return complaint_queue.snapshot()
+
+
+@app.post("/api/complaints", status_code=202)
+@app.post("/query", status_code=202)
 async def process_complaint(request: ComplaintRequest):
     """
     Primary Complaint Resolution Endpoint:
-    1. Check technician-approved resolver base and send a match to Groq for formatting
-    2. Fall back to 3-level RAG + Groq LLM synthesis
-    3. Run escalation policy checks
-    4. Register in Admin queue if escalated
+    1. Classify urgency and priority.
+    2. Enqueue the complaint.
+    3. Return a request ID for status polling.
     """
     complaint_text = request.complaint.strip()
+    try:
+        priority_result = classify_request(complaint_text)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Priority classifier unavailable: {exc}") from exc
 
-    res = handle_new_complaint(complaint_text)
-    if not res or not res.get("found"):
-        raise HTTPException(status_code=404, detail="No matching knowledge found for this complaint.")
-
-    complaint_id = res.get("complaint_id") or str(uuid.uuid4())
-    solution = res.get("solution", "")
-    category = res.get("category", "General")
-    subcategory = res.get("subcategory", "General")
-    source = res.get("source", "llm_kb")
-
-    # Check for escalation triggers (comparing complaint text and solution logic accurately)
-    escalation_required, escalation_reason = check_escalation(complaint_text, solution)
-
+    complaint_id = str(uuid.uuid4())
     ticket_id = generate_ticket_id()
-
-    # Formulate standardized admin ticket structure if escalated
-    ticket_data = {
-        "id": ticket_id,
-        "customer": request.filingOnBehalf == "Yes" and "Representative Filing" or "Customer Submission",
-        "accountId": f"#ACC-{str(uuid.uuid4().int)[:5]}",
-        "tier": "Residential / Business",
-        "location": f"{request.city or 'Unknown'} - {request.state or 'Sector'}",
-        "category": category,
-        "issueSummary": complaint_text[:60] + "..." if len(complaint_text) > 60 else complaint_text,
-        "priority": "HIGH" if escalation_required else "MEDIUM",
-        "riskScore": 92 if escalation_required else 65,
-        "aging": "Just now",
-        "status": "ESCALATED" if escalation_required else "RESOLVED",
-        "assignedTo": "Sarah Connor (Agent #AGT-8824)",
-        "complaintText": complaint_text,
-        "sentiment": f"Source: {source}",
-        "whyEscalated": [escalation_reason] if escalation_reason else ["Automated processing complete"],
-        "aiSummary": f"Source: {source}. Category: {category}/{subcategory}",
-        "aiRecommendation": solution,
-        "ragSources": [f"{category} Knowledge Base"],
-        "timeline": [
-            {"time": datetime.now().strftime("%I:%M %p"), "event": f"Processed via {source}"}
-        ],
-        "notes": []
+    job = {
+        "complaint_id": complaint_id,
+        "ticket_id": ticket_id,
+        "complaint": complaint_text,
+        "request": request.model_dump(),
+        "priority_result": priority_result,
+        "priority": priority_result["priority"],
+        "queue": priority_result["queue"],
+        "status": "QUEUED",
     }
-
-    if escalation_required:
-        ESCALATED_TICKETS.append(ticket_data)
-
-    return {
+    COMPLAINT_REQUESTS[complaint_id] = {
         "success": True,
         "complaint_id": complaint_id,
         "ticketId": ticket_id,
-        "found": True,
-        "source": source,
-        "category": category,
-        "subcategory": subcategory,
-        "solution": solution,
-        "resolution": solution,
-        "escalationRequired": escalation_required,
-        "escalationReason": escalation_reason,
-        "matches": res.get("matches", []),
-        "status": ticket_data["status"],
+        "status": "QUEUED",
+        "urgency": priority_result["urgency"],
+        "priority": priority_result["priority"],
+        "queue": priority_result["queue"],
+        "priorityScore": priority_result.get("priority_score"),
     }
+    queue_info = complaint_queue.submit(job)
+    COMPLAINT_REQUESTS[complaint_id].update(queue_info)
+    return COMPLAINT_REQUESTS[complaint_id]
+
+
+@app.get("/api/complaints/{complaint_id}")
+async def get_complaint_status(complaint_id: str):
+    result = COMPLAINT_REQUESTS.get(complaint_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Complaint request not found.")
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +324,7 @@ async def submit_negative_feedback(req: NegativeFeedbackRequest):
         "complaint": req.complaint,
         "ai_solution": req.ai_solution,
         "feedback": req.feedback,
+        "email": req.email.strip(),
         "status": "pending",
         "submitted_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -297,42 +347,69 @@ async def get_negative_feedback():
 
 
 @app.post("/api/admin/resolve-feedback")
-async def resolve_feedback(req: ResolveFeedbackRequest):
+def resolve_feedback(req: ResolveFeedbackRequest):
     """
     Admin/technician submits the correct solution for a negative feedback item.
     Moves it from pending to resolved in resolver_base.
     """
-    # Find the item
-    item = None
-    for i, fb in enumerate(NEGATIVE_FEEDBACK_ITEMS):
-        if fb["feedback_id"] == req.feedback_id:
-            item = fb
-            break
+    # Serialize resolution and email delivery so repeated clicks cannot create
+    # duplicate resolver files or send duplicate emails.
+    with RESOLUTION_LOCK:
+        item = next(
+            (fb for fb in NEGATIVE_FEEDBACK_ITEMS if fb["feedback_id"] == req.feedback_id),
+            None,
+        )
+        resolved_file = RESOLVER_RESOLVED / f"{req.feedback_id}.json"
+        if item and item.get("status") == "resolved":
+            raise HTTPException(status_code=409, detail="This feedback has already been resolved.")
+        if resolved_file.exists():
+            raise HTTPException(status_code=409, detail="This feedback has already been resolved.")
+        if not item:
+            raise HTTPException(status_code=404, detail=f"Feedback item {req.feedback_id} not found.")
 
-    if not item:
-        raise HTTPException(status_code=404, detail=f"Feedback item {req.feedback_id} not found.")
+        item["status"] = "resolved"
+        item["resolved_solution"] = req.resolved_solution
+        item["resolved_at"] = datetime.now(timezone.utc).isoformat()
 
-    # Update item
-    item["status"] = "resolved"
-    item["resolved_solution"] = req.resolved_solution
-    item["resolved_at"] = datetime.now(timezone.utc).isoformat()
+        pending_file = RESOLVER_PENDING / f"{req.feedback_id}.json"
+        resolver_markdown_file = store_resolver_solution(item, req.resolved_solution)
 
-    # Move file from pending to resolved
-    pending_file = RESOLVER_PENDING / f"{req.feedback_id}.json"
-    resolved_file = RESOLVER_RESOLVED / f"{req.feedback_id}.json"
+        email_status = "sent"
+        email_error = None
+        try:
+            send_resolution_email(
+                recipient=item.get("email", ""),
+                complaint=item["complaint"],
+                user_feedback=item["feedback"],
+                technician_solution=req.resolved_solution,
+                feedback_id=req.feedback_id,
+            )
+        except Exception as exc:
+            email_status = "failed"
+            email_error = str(exc)
 
-    resolved_file.write_text(json.dumps(item, indent=2), encoding="utf-8")
+        item["email_status"] = email_status
+        item["email_sent_at"] = datetime.now(timezone.utc).isoformat() if email_status == "sent" else None
+        if email_error:
+            item["email_error"] = email_error
 
-    resolver_markdown_file = store_resolver_solution(item, req.resolved_solution)
+        # Save the final resolution record, including email delivery status.
+        resolved_file.write_text(json.dumps(item, indent=2), encoding="utf-8")
 
-    if pending_file.exists():
-        pending_file.unlink()
+        if pending_file.exists():
+            pending_file.unlink()
 
     return {
         "success": True,
         "feedback_id": req.feedback_id,
-        "message": "Solution submitted and stored in resolver base.",
+        "message": (
+            "Solution submitted, stored in resolver base, and emailed to the customer."
+            if email_status == "sent"
+            else "Solution submitted and stored in resolver base, but customer email delivery failed."
+        ),
         "resolver_file": str(resolver_markdown_file.relative_to(_PROJECT_ROOT)),
+        "email_status": email_status,
+        "email_error": email_error,
     }
 
 

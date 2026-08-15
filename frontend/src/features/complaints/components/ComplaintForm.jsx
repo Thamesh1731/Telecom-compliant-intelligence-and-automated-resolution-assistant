@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import BlurText from "../../../components/BlurText";
 import SpotLightCard from "../../../components/SpotLightCard";
-import { submitComplaintTicket, submitNegativeFeedback } from "../api/complaintServices";
+import { submitComplaintTicket, getComplaintStatus, submitNegativeFeedback } from "../api/complaintServices";
 
 export default function ComplaintForm() {
   const [formData, setFormData] = useState({
@@ -54,6 +54,20 @@ export default function ComplaintForm() {
     try {
       const data = await submitComplaintTicket(formData);
       setResult(data);
+      if (data.status === "QUEUED" || data.status === "PROCESSING") {
+        const pollStatus = async () => {
+          try {
+            const latest = await getComplaintStatus(data.complaint_id);
+            setResult(latest);
+            if (!["RESOLVED", "ESCALATED", "FAILED"].includes(latest.status)) {
+              window.setTimeout(pollStatus, 1000);
+            }
+          } catch (pollError) {
+            setError(pollError.message || "Unable to retrieve complaint status.");
+          }
+        };
+        window.setTimeout(pollStatus, 1000);
+      }
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes("failed to fetch")) {
         setError(
@@ -98,6 +112,7 @@ export default function ComplaintForm() {
         subcategory: result.subcategory || "General",
         ai_solution: result.resolution || result.solution,
         feedback: negativeFeedbackText,
+        email: formData.email,
       });
       setNegativeFeedbackSubmitted(true);
     } catch (err) {
@@ -127,7 +142,7 @@ export default function ComplaintForm() {
   // Helper to parse solution blocks
   const parseSolutionText = (text) => {
     if (!text) return { problem: "", solution: "", reason: "", confidence: "" };
-    
+
     let problem = "";
     let solution = "";
     let reason = "";
@@ -156,7 +171,7 @@ export default function ComplaintForm() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full items-stretch">
-        
+
         {/* Left Side: Ticket Metadata & Overview (4 cols) */}
         <div className="md:col-span-4 bg-slate-950/80 rounded-xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
           <div className="space-y-3">
@@ -237,7 +252,7 @@ export default function ComplaintForm() {
 
         {/* Right Side: Full AI Resolution & Actions (8 cols) */}
         <div className="md:col-span-8 bg-slate-950/80 rounded-xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
-          
+
           {/* Header */}
           <div className="flex items-center space-x-2 border-b border-slate-800/80 pb-2">
             <svg className="w-4 h-4 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -448,12 +463,13 @@ export default function ComplaintForm() {
         )}
 
         {/* Result Dashboard */}
-        {!isSubmitting && !error && result && <ResultDashboard data={result} />}
+        {/* Call the render helper directly so feedback input stays mounted while typing. */}
+        {!isSubmitting && !error && result && ResultDashboard({ data: result })}
 
         {/* Input Form (Wide 2-Column Layout) */}
         {!isSubmitting && !error && !result && (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-            
+
             {/* Left: Complaint Text (7 cols) */}
             <div className="md:col-span-7 flex flex-col justify-between space-y-2">
               <label className="block text-xs uppercase tracking-wider font-bold text-slate-300">

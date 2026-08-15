@@ -1,0 +1,16 @@
+{
+  "feedback_id": "NFB-20260815-228317",
+  "complaint_id": "df16eecd-ded8-4b94-870d-1ed047fd467e",
+  "category": "internet",
+  "subcategory": "Intermittent Internet Connection",
+  "complaint": "The router keeps restarting on its own, and I am unable to maintain a stable connection.",
+  "ai_solution": "Problem:\nThe router keeps restarting on its own, and I am unable to maintain a stable connection.\n\nRecommended Solution:\n1. Check whether the issue affects one device or multiple devices.\n2. Check whether the issue occurs only in a particular location within the home.\n3. Check router or gateway status indicators.\n4. Check physical power and network connections.\n5. Restart the router or gateway.\n6. Check for a known service outage.\n7. If possible, test using a wired connection.\n\nReason:\nThe retrieved knowledge suggests that the issue may be caused by local Wi-Fi conditions, equipment, or device-specific factors. The recommended solution is based on the troubleshooting procedure outlined in Resolution Source 1, which covers common symptoms and possible causes of intermittent internet connections.\n\nEscalation:\nNo\n\nEscalation Reason:\nNot required\n\nConfidence:\nMedium\n\nNote: The confidence level is Medium because the retrieved knowledge provides a general troubleshooting procedure, but it does not specifically address the issue of the router restarting on its own. Further investigation may be required to determine the root cause of the problem.",
+  "feedback": "Give better solution",
+  "email": "thameshcsevec@gmail.com",
+  "status": "resolved",
+  "submitted_at": "2026-08-15T09:41:28.815310+00:00",
+  "resolved_solution": "Solution\nPower cycle the router \u2014 unplug it from the power supply for 30\u201360 seconds, then reconnect it.\nCheck the power adapter and cable \u2014 make sure they are firmly connected and not damaged.\nTry a different power outlet to rule out an unstable power source.\nCheck for overheating \u2014 place the router in an open, well-ventilated area and remove anything covering it.\nDisconnect unnecessary devices temporarily and check whether the router still restarts.\nCheck the router firmware and update it if a newer version is available.\nReset network settings/configuration if the problem started after a configuration change.\nIf the router continues restarting after these steps, the power adapter or router hardware may be faulty. Contact your ISP or router manufacturer for a hardware check/replacement.",
+  "resolved_at": "2026-08-15T09:42:22.950276+00:00",
+  "email_status": "sent",
+  "email_sent_at": "2026-08-15T09:42:27.805832+00:00"
+}
