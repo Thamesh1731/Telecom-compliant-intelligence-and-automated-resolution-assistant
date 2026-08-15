@@ -50,7 +50,6 @@ Avoid repeating troubleshooting steps that have already been completed unless th
 
 Escalate when:
 
-- The same issue has been reported repeatedly without resolution.
 - The issue requires a specialist team.
 - A previously promised resolution has not occurred.
 - The customer requests supervisor-level assistance.

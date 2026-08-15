@@ -191,9 +191,8 @@ Escalate when:
 
 - No mobile service persists after standard troubleshooting.
 - A network outage is suspected but cannot be confirmed automatically.
-- The account is active but the device cannot connect.
-- The SIM/eSIM appears damaged, invalid, or incorrectly provisioned.
-- The device may be blocked or barred.
+- The account is active but the device cannot connect. 
+- The device may be blocked or barred. 
 - Multiple customers in the same area appear to be affected.
 - Device hardware failure is suspected.
 - The issue repeatedly returns after temporary recovery.

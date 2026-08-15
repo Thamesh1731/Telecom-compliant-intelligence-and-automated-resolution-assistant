@@ -184,13 +184,11 @@ If the requested change requires manual account intervention, escalate.
 Escalate when:
 
 - A valid plan change cannot be completed.
-- The requested plan appears eligible but the system rejects the
-  change.
+- The requested plan appears eligible but the system rejects the change.
 - The wrong plan was activated.
-- The plan change is stuck in a pending state beyond the applicable
-  processing period.
+- The plan change is stuck in a pending state beyond the applicable processing period.
 - Payment succeeded but the requested plan change did not occur.
-- The correct mobile line cannot be determined.
+- The correct mobile line cannot be determined. 
 - Account-level correction is required.
 - The provider system appears to be malfunctioning.
 - Multiple customers report the same plan-change problem.

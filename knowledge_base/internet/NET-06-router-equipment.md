@@ -174,16 +174,13 @@ connection remains unavailable, technical investigation may be required.
 
 Escalate when:
 
-- Equipment remains unresponsive after the recommended restart
-  procedure.
+- Equipment remains unresponsive after the recommended restart procedure.
 - Equipment repeatedly loses connectivity.
 - Status indicators continue to show a persistent connection failure.
-- Required cables and power connections have been verified.
-- Multiple devices remain unable to access the Internet.
-- A provider-side network problem is suspected.
+- Multiple devices remain unable to access the Internet. 
+- A provider-side network problem is suspected. 
 - The equipment appears physically damaged or defective.
-- The customer repeatedly experiences unresolved equipment-related
-  connectivity problems.
+- The customer repeatedly experiences unresolved equipment-related connectivity problems.
 
 ## Agent Information to Record
 

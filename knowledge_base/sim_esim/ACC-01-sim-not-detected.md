@@ -206,13 +206,10 @@ device support.
 Escalate when:
 
 - The SIM remains undetected after standard troubleshooting.
-- The SIM is damaged or defective.
 - SIM provisioning appears incorrect.
-- The SIM works in another device but cannot be used correctly on the
-  customer's device.
+- The SIM works in another device but cannot be used correctly on the customer's device.
 - No compatible SIM is detected by the customer's device.
 - The mobile line or account status is inconsistent.
-- SIM replacement is required.
 - Carrier-side investigation is required.
 - The problem repeatedly returns after temporary recovery.
 

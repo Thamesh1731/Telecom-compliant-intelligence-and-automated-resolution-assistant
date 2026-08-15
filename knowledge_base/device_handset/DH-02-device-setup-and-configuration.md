@@ -89,12 +89,11 @@ Route to `internet` when the issue specifically concerns mobile or fixed interne
 
 Escalate when:
 
-- The device cannot complete its initial setup.
 - Configuration repeatedly fails.
 - The device requires specialist support.
 - The device shows a persistent system error.
 - Data transfer cannot be completed through supported procedures.
-- The issue appears to involve hardware or software failure.
+
 
 ## Important Notes
 

@@ -208,12 +208,10 @@ Escalate when:
 
 - The eSIM cannot be provisioned.
 - Activation repeatedly fails with valid information.
-- The eSIM profile is installed but the carrier cannot activate the
-  mobile line.
+- The eSIM profile is installed but the carrier cannot activate the mobile line.
 - Account and eSIM records are inconsistent.
 - eSIM transfer requires carrier-side intervention.
-- The activation code appears invalid or already used and a new code
-  must be issued.
+- The activation code appears invalid or already used and a new code must be issued.
 - The device and account appear compatible but activation still fails.
 - Multiple activation attempts fail.
 - Manual account or line correction is required.
