@@ -4,7 +4,19 @@
  * Uses VITE_API_BASE_URL from the frontend .env file.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const getApiBaseUrl = () => {
+  if (typeof window === "undefined") return "http://54.91.159.187:8000";
+  const host = window.location.hostname;
+  if (host.includes("s3-website")) {
+    return "http://54.91.159.187:8000";
+  }
+  if (host.includes("cloudfront.net")) {
+    return "";
+  }
+  return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Submit a complaint ticket to the backend RAG pipeline.
