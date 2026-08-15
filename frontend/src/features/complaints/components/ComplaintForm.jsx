@@ -419,45 +419,41 @@ export default function ComplaintForm() {
           </div>
         )}
 
-        {/* Error State */}
-        {!isSubmitting && error && (
-          <div className="space-y-4 max-w-xl mx-auto w-full">
-            <div className="rounded-xl bg-red-950/50 border border-red-500/50 p-4">
-              <div className="flex items-start space-x-3">
-                <svg
-                  className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <div>
-                  <p className="text-sm font-bold text-red-300 mb-1">Connection Error</p>
-                  <p className="text-xs text-red-300/80">{error}</p>
-                </div>
-              </div>
+        {/* Error Alert Banner */}
+        {error && (
+          <div className="mb-4 rounded-xl bg-red-950/70 border border-red-500/50 p-3.5 flex items-start space-x-3 shadow-lg">
+            <svg
+              className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div className="flex-1">
+              <p className="text-xs font-bold text-red-300">Notice</p>
+              <p className="text-xs text-red-200/90 leading-relaxed">{error}</p>
             </div>
             <button
               type="button"
-              onClick={handleReset}
-              className="w-full py-2.5 px-4 border border-slate-700 hover:border-cyan-500/50 text-slate-300 text-xs font-bold rounded-lg transition cursor-pointer"
+              onClick={() => setError(null)}
+              className="text-red-400 hover:text-red-200 text-xs font-bold px-2 py-1"
             >
-              Try Again
+              ✕
             </button>
           </div>
         )}
 
         {/* Result Dashboard */}
-        {!isSubmitting && !error && result && <ResultDashboard data={result} />}
+        {!isSubmitting && result && <ResultDashboard data={result} />}
 
         {/* Input Form (Wide 2-Column Layout) */}
-        {!isSubmitting && !error && !result && (
+        {!isSubmitting && !result && (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
             
             {/* Left: Complaint Text (7 cols) */}
