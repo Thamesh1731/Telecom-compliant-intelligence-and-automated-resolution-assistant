@@ -136,11 +136,10 @@ Escalate when:
 - A confirmed credit is missing from the account.
 - An approved refund has not been received within the applicable
   processing period.
-- The refund failed or was returned.
 - The credit amount is incorrect or disputed.
-- A cancelled account still has an unresolved credit balance.
+- A cancelled account still has an unresolved credit balance. 
 - The account contains conflicting billing information.
-- Manual billing review is required.
+
 
 ## Agent Information to Record
 
