@@ -767,69 +767,8 @@ body {
 }
 
 /* ==========================================================================
-   QUEUE TREE & CHIP FILTERS
+   ESCALATION FILTERS
    ========================================================================== */
-.queue-overview-bar {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 16px 20px;
-}
-
-.queue-tree-widget {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.tree-node.root {
-  font-weight: 700;
-  font-size: 14px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tree-branches {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-left: 24px;
-}
-
-.branch-pill {
-  background-color: var(--bg-surface-elevated);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: var(--transition-fast);
-}
-
-.branch-pill .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.branch-pill.high .dot { background-color: var(--priority-high); }
-.branch-pill.medium .dot { background-color: var(--priority-med); }
-.branch-pill.low .dot { background-color: var(--priority-low); }
-
-.branch-pill:hover, .branch-pill.active-filter {
-  border-color: var(--accent-primary);
-  color: #fff;
-  background-color: rgba(99, 102, 241, 0.15);
-}
-
 .chip-filters {
   display: flex;
   gap: 8px;
@@ -849,6 +788,54 @@ body {
   background-color: var(--accent-primary);
   color: #fff;
   border-color: var(--accent-primary);
+}
+
+.simple-escalation-body {
+  gap: 16px;
+}
+
+.simple-escalation-body .drawer-card {
+  margin-bottom: 0;
+}
+
+.escalation-reason-card .reason-list {
+  margin-top: 10px;
+}
+
+.technician-response-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.response-help {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 0;
+}
+
+#drawer-technician-response {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  padding: 12px;
+  font: inherit;
+  line-height: 1.5;
+}
+
+#drawer-technician-response:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.simple-drawer-footer #drawer-send-resolution-btn {
+  width: 100%;
+  justify-content: center;
 }
 
 /* ==========================================================================
