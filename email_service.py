@@ -39,7 +39,7 @@ def send_resolution_email(
         "to our technician.\n\n"
         f"Complaint:\n{complaint}\n\n"
         f"Your feedback:\n{user_feedback}\n\n"
-        "Technician's solution:\n"
+        "Customer support message:\n"
         f"{technician_solution}\n\n"
         "Thank you for your patience.\n\n"
         f"Feedback reference: {feedback_id}"

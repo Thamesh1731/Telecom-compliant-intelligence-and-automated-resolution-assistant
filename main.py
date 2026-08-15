@@ -49,6 +49,10 @@ ESCALATED_TICKETS: List[Dict[str, Any]] = []
 NEGATIVE_FEEDBACK_ITEMS: List[Dict[str, Any]] = []
 COMPLAINT_REQUESTS: Dict[str, Dict[str, Any]] = {}
 RESOLUTION_LOCK = threading.Lock()
+ESCALATION_FORWARD_MESSAGE = (
+    "Your response has been forwarded to our technician. "
+    "They will contact you soon."
+)
 
 # Resolver Base paths
 RESOLVER_BASE = _PROJECT_ROOT / "resolver_base"
@@ -123,6 +127,11 @@ class NegativeFeedbackRequest(BaseModel):
 
 class ResolveFeedbackRequest(BaseModel):
     feedback_id: str
+    resolved_solution: str
+
+
+class ResolveTicketRequest(BaseModel):
+    ticket_id: str
     resolved_solution: str
 
 
@@ -202,6 +211,7 @@ def _process_queued_complaint(job: Dict[str, Any]) -> None:
             "status": "ESCALATED" if escalation_required else "RESOLVED",
             "assignedTo": "Sarah Connor (Agent #AGT-8824)",
             "complaintText": complaint_text,
+            "customerEmail": request_data.get("email", ""),
             "sentiment": f"Source: {source}",
             "whyEscalated": [escalation_reason] if escalation_reason else ["Automated processing complete"],
             "aiSummary": f"Source: {source}. Category: {category}/{subcategory}",
@@ -213,14 +223,17 @@ def _process_queued_complaint(job: Dict[str, Any]) -> None:
         if escalation_required:
             ESCALATED_TICKETS.append(ticket_data)
 
+        customer_solution = ESCALATION_FORWARD_MESSAGE if escalation_required else solution
+
         COMPLAINT_REQUESTS[complaint_id].update({
             "success": True,
             "found": True,
             "source": source,
             "category": category,
             "subcategory": subcategory,
-            "solution": solution,
-            "resolution": solution,
+            "solution": customer_solution,
+            "resolution": customer_solution,
+            "aiSolution": solution,
             "escalationRequired": escalation_required,
             "escalationReason": escalation_reason,
             "matches": res.get("matches", []),
@@ -420,6 +433,59 @@ def resolve_feedback(req: ResolveFeedbackRequest):
 async def get_admin_tickets():
     """Return all real escalated tickets captured by the backend."""
     return {"tickets": ESCALATED_TICKETS}
+
+
+@app.post("/api/admin/resolve-ticket")
+def resolve_escalated_ticket(req: ResolveTicketRequest):
+    """Save a technician response for an escalated ticket and email the customer."""
+    with RESOLUTION_LOCK:
+        ticket = next((item for item in ESCALATED_TICKETS if item["id"] == req.ticket_id), None)
+        if not ticket:
+            raise HTTPException(status_code=404, detail=f"Escalated ticket {req.ticket_id} not found.")
+        if ticket.get("status") == "RESOLVED":
+            raise HTTPException(status_code=409, detail="This escalated ticket has already been resolved.")
+
+        resolved_solution = req.resolved_solution.strip()
+        if not resolved_solution:
+            raise HTTPException(status_code=400, detail="Resolved solution cannot be empty.")
+
+        ticket["status"] = "RESOLVED"
+        ticket["supportMessage"] = resolved_solution
+        ticket["resolvedAt"] = datetime.now(timezone.utc).isoformat()
+        email_status = "sent"
+        email_error = None
+        try:
+            send_resolution_email(
+                recipient=ticket.get("customerEmail", ""),
+                complaint=ticket["complaintText"],
+                user_feedback=ticket.get("whyEscalated", ["Escalation requested"])[0],
+                technician_solution=resolved_solution,
+                feedback_id=ticket["id"],
+            )
+        except Exception as exc:
+            email_status = "failed"
+            email_error = str(exc)
+
+        ticket["emailStatus"] = email_status
+        if email_error:
+            ticket["emailError"] = email_error
+        ticket.setdefault("timeline", []).append({
+            "time": datetime.now().strftime("%I:%M %p"),
+            "event": "Technician resolved the escalation and customer notification was "
+            + ("sent." if email_status == "sent" else "not delivered."),
+        })
+
+        return {
+            "success": True,
+            "ticket_id": ticket["id"],
+            "email_status": email_status,
+            "email_error": email_error,
+            "message": (
+                "Support message saved and emailed to the customer."
+                if email_status == "sent"
+                else "Support message saved, but customer email delivery failed."
+            ),
+        }
 
 
 # ---------------------------------------------------------------------------
