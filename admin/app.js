@@ -852,10 +852,19 @@ function closeNegFeedbackModal() {
 async function submitResolvedSolution() {
   if (!activeNegFeedbackId) return;
 
+  const submitBtn = document.getElementById('neg-modal-submit-btn');
+  if (submitBtn?.disabled) return;
+
   const solutionText = document.getElementById('neg-modal-solution-text').value.trim();
   if (!solutionText) {
     showToast('Please enter the correct resolution before submitting.', 'warning');
     return;
+  }
+
+  const originalButtonHtml = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
   }
 
   try {
@@ -881,6 +890,11 @@ async function submitResolvedSolution() {
     }
   } catch (err) {
     showToast('Network error submitting resolution.', 'danger');
+  } finally {
+    if (submitBtn && document.getElementById('neg-feedback-modal')?.classList.contains('active')) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalButtonHtml;
+    }
   }
 }
 

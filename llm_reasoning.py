@@ -9,6 +9,7 @@ locally (env var instead of Colab's userdata) instead of inside Colab.
 """
 
 import os
+import re
 from groq import Groq
 
 GROQ_MODEL = "llama-3.1-8b-instant"
@@ -222,7 +223,87 @@ provide the most appropriate solution.
     return response.choices[0].message.content
 
 
+def fallback_generate_solution(complaint, retrieved_results):
+    if not retrieved_results:
+        return (
+            "Problem:\nCustomer issue could not be resolved from existing knowledge base.\n\n"
+            "Recommended Solution:\n1. Contact senior support tier or open a technical inquiry ticket.\n\n"
+            "Reason:\nNo matching knowledge base document or resolver procedure was found.\n\n"
+            "Escalation:\nYes\n\nEscalation Reason:\nNo matching documentation.\n\nConfidence:\nLow"
+        )
+    top = retrieved_results[0]
+    metadata = top.get("metadata", {})
+    text = top.get("text", "")
+    subcat = metadata.get("subcategory", "General Issue")
+    cat = metadata.get("category", "General")
+    sec_name = metadata.get("section_name", "Resolution Procedure")
+    
+    # If technician-approved solution from resolver base
+    if "Approved Solution:" in text:
+        solution_part = text.split("Approved Solution:")[-1].strip()
+        return f"""Problem:
+Customer reported issue regarding {subcat} ({cat}).
+
+Recommended Solution:
+{solution_part}
+
+Reason:
+Technician-approved resolution retrieved from master resolver database for {subcat}.
+
+Escalation:
+No
+
+Escalation Reason:
+Not required
+
+Confidence:
+High (100%)"""
+
+    # Extract clean steps from knowledge base text
+    lines = [
+        l.strip() for l in text.split("\n") 
+        if l.strip() and not l.strip().startswith("#") and not l.strip().startswith("Feedback ID:") and not l.strip().startswith("Complaint ID:")
+    ]
+    steps = [l for l in lines if l.startswith("-") or l.startswith("1.") or l.startswith("2.") or l.startswith("3.")]
+    if not steps:
+        steps = lines[:3]
+    
+    formatted_steps = []
+    for i, s in enumerate(steps[:4], start=1):
+        clean_s = re.sub(r"^[\-\*\d\.]+\s*", "", s)
+        if clean_s and not clean_s.startswith("Category:") and not clean_s.startswith("Subcategory:"):
+            formatted_steps.append(f"{i}. {clean_s}")
+            
+    if not formatted_steps:
+        formatted_steps = [f"1. Follow standard troubleshooting guidelines for {subcat} under {cat}."]
+        
+    steps_str = "\n".join(formatted_steps)
+    
+    return f"""Problem:
+Customer reported an issue regarding {subcat} ({cat}).
+
+Recommended Solution:
+{steps_str}
+
+Reason:
+Synthesized from verified knowledge base article for {sec_name} ({subcat}).
+
+Escalation:
+No
+
+Escalation Reason:
+Not required
+
+Confidence:
+High"""
+
+
 def generate_solution(complaint, retrieved_results):
-    """Convenience wrapper: retrieved_results -> context -> LLM answer."""
-    rag_context = build_rag_context(retrieved_results)
-    return call_llama(complaint, rag_context)
+    """Convenience wrapper: retrieved_results -> context -> LLM answer with fallback."""
+    try:
+        rag_context = build_rag_context(retrieved_results)
+        return call_llama(complaint, rag_context)
+    except Exception as e:
+        print(f"[llm_reasoning] Groq LLM call unavailable ({e}), using RAG fallback synthesis.")
+        return fallback_generate_solution(complaint, retrieved_results)
+
