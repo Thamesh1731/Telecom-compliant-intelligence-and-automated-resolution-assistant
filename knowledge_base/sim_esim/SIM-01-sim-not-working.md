@@ -94,7 +94,6 @@ Escalate when:
 - The SIM is not detected after troubleshooting.
 - The SIM appears defective.
 - The mobile line cannot be provisioned correctly.
-- SIM replacement is required.
 - The issue persists across compatible devices.
 - Account or network provisioning requires specialist investigation.
 

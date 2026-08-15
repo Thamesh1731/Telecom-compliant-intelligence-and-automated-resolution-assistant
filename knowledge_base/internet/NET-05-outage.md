@@ -90,14 +90,11 @@ perform additional troubleshooting and escalate if necessary.
 
 Escalate when:
 
-- A provider-side outage is suspected but no outage information is
-  available.
-- The customer remains without service after a reported outage has
-  been resolved.
+- A provider-side outage is suspected but no outage information is available.
+- The customer remains without service after a reported outage has been resolved.
 - Multiple devices remain disconnected after local troubleshooting.
 - The issue appears to affect multiple customers or locations.
-- The customer's equipment appears functional but Internet service
-  remains unavailable.
+- The customer's equipment appears functional but Internet service remains unavailable.
 - The issue is persistent or repeatedly reported.
 - Technical investigation is required.
 

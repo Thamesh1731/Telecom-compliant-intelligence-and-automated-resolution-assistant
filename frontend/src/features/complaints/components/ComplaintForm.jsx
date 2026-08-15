@@ -95,6 +95,7 @@ export default function ComplaintForm() {
         subcategory: result.subcategory || "General",
         ai_solution: result.resolution || result.solution,
         feedback: negativeFeedbackText,
+        email: formData.email,
       });
       setNegativeFeedbackSubmitted(true);
     } catch (err) {

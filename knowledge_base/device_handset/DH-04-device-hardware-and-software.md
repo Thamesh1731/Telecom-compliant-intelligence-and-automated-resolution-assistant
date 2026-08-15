@@ -111,11 +111,9 @@ Route to `internet` when the primary issue concerns internet service rather than
 
 Escalate when:
 
-- Hardware failure is suspected.
 - The device has physical or liquid damage.
 - The device remains unusable after approved troubleshooting.
-- A battery or charging fault is suspected.
-- The device requires authorized repair or replacement.
+- The device requires authorized repair or replacement. 
 - A persistent operating-system problem cannot be resolved remotely.
 
 ## Important Notes

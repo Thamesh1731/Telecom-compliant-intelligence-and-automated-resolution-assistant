@@ -41,14 +41,13 @@ If the connection remains unavailable after standard troubleshooting, the compla
 
 ## Escalation Conditions
 
-Escalate the complaint when:
+Escalate the complaint when: 
 
 - The internet remains unavailable after standard troubleshooting.
-- A service outage is suspected or confirmed.
-- Router or gateway indicators show a persistent connection problem.
-- Multiple devices are affected.
-- The same issue has been repeatedly reported.
-- Equipment appears to be malfunctioning.
+- Router or gateway indicators show a persistent connection problem. 
+- Multiple devices are affected. 
+- The same issue has been repeatedly reported. 
+- Equipment appears to be malfunctioning. 
 
 ## Agent Guidance
 

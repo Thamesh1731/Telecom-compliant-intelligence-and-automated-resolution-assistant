@@ -307,8 +307,7 @@ Escalate when:
 - A network or routing incident is suspected.
 - Manual provider-side intervention is required.
 - The issue began after a number transfer or porting event.
-- Destination-specific failures cannot be explained by current provider
-  policy.
+- Destination-specific failures cannot be explained by current provider policy.
 
 ## Potential Outgoing-Call Incident
 

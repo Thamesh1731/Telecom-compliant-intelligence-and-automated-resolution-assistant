@@ -9,7 +9,8 @@ let tickets = [];
 // Active ticket state & current navigation filters
 let activeTicketId = null;
 let currentTab = 'dashboard';
-let currentFilterPriority = 'all';
+let currentSearchQuery = '';
+let currentEscalationFilter = 'all';
 let negativeFeedbackItems = [];
 let activeNegFeedbackId = null;
 
@@ -68,7 +69,6 @@ async function fetchTicketsFromBackend() {
     console.log('No backend tickets loaded yet:', err);
   }
   renderDashboardTable();
-  renderMyQueueTable();
   renderAllEscalatedTable();
   updateMetricsUI();
 }
@@ -267,14 +267,27 @@ function updateMetricsUI() {
   document.getElementById('metric-aging').innerText = agingCount;
 
   document.getElementById('dash-escalated-count').innerText = totalAssigned;
-  document.getElementById('nav-queue-count').innerText = totalAssigned;
   document.getElementById('nav-escalated-total').innerText = totalAssigned;
+}
 
-  // Queue Tree Numbers
-  document.getElementById('queue-tree-total').innerText = totalAssigned;
-  document.getElementById('queue-tree-high').innerText = highPriority;
-  document.getElementById('queue-tree-med').innerText = medPriority;
-  document.getElementById('queue-tree-low').innerText = lowPriority;
+function getFilteredTickets(activeOnly = false) {
+  let filtered = activeOnly
+    ? tickets.filter(t => t.status === 'ESCALATED')
+    : [...tickets];
+
+  if (currentEscalationFilter === 'low-confidence') {
+    filtered = filtered.filter(t => t.riskScore < 85 || JSON.stringify(t.whyEscalated || []).toLowerCase().includes('confidence'));
+  } else if (currentEscalationFilter === 'repeat') {
+    filtered = filtered.filter(t => JSON.stringify(t.whyEscalated || []).toLowerCase().includes('repeat'));
+  } else if (currentEscalationFilter === 'high-risk') {
+    filtered = filtered.filter(t => Number(t.riskScore) >= 90);
+  }
+
+  if (currentSearchQuery) {
+    filtered = filtered.filter(t => JSON.stringify(t).toLowerCase().includes(currentSearchQuery));
+  }
+
+  return filtered;
 }
 
 /**
@@ -284,10 +297,14 @@ function renderDashboardTable() {
   const tbody = document.getElementById('dashboard-tickets-body');
   tbody.innerHTML = '';
 
-  const activeTickets = tickets.filter(t => t.status === 'ESCALATED');
+  const activeTickets = getFilteredTickets(true);
 
   if (activeTickets.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-muted);">🎉 All escalated exceptions resolved! Zero pending items in queue.</td></tr>`;
+    const hasOpenTickets = tickets.some(t => t.status === 'ESCALATED');
+    const message = hasOpenTickets
+      ? 'No open escalations match the current filters.'
+      : 'No open escalations. Technician workload is clear.';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 32px; color: var(--text-muted);">${message}</td></tr>`;
     return;
   }
 
@@ -322,56 +339,19 @@ function renderDashboardTable() {
 }
 
 /**
- * Render My Queue Table
- */
-function renderMyQueueTable() {
-  const tbody = document.getElementById('my-queue-body');
-  tbody.innerHTML = '';
-
-  let filtered = tickets.filter(t => t.status === 'ESCALATED');
-
-  if (currentFilterPriority !== 'all') {
-    filtered = filtered.filter(t => t.priority === currentFilterPriority.toUpperCase());
-  }
-
-  if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">No tickets matching filter criteria.</td></tr>`;
-    return;
-  }
-
-  filtered.forEach(t => {
-    const tr = document.createElement('tr');
-    tr.onclick = () => openTicketDetail(t.id);
-
-    tr.innerHTML = `
-      <td><span class="ticket-id">${t.id}</span></td>
-      <td>
-        <span class="customer-name">${escapeHtml(t.customer)}</span>
-        <span class="customer-sub">${t.location}</span>
-      </td>
-      <td><span class="category-badge"><i class="fa-solid ${getCategoryIcon(t.category)}"></i> ${t.category}</span></td>
-      <td>${getPriorityBadgeHtml(t.priority)}</td>
-      <td>${getRiskMeterHtml(t.riskScore)}</td>
-      <td><span class="badge badge-subtle"><i class="fa-solid fa-clock"></i> ${t.aging}</span></td>
-      <td><span class="reason-pill">${escapeHtml(t.issueSummary)}</span></td>
-      <td>
-        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openTicketDetail('${t.id}')">
-          Handle Exception
-        </button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-/**
  * Render All Escalated Table
  */
 function renderAllEscalatedTable() {
   const tbody = document.getElementById('all-escalated-body');
   tbody.innerHTML = '';
 
-  tickets.forEach(t => {
+  const filteredTickets = getFilteredTickets(false);
+  if (filteredTickets.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 32px; color: var(--text-muted);">No complaints match the current filters.</td></tr>`;
+    return;
+  }
+
+  filteredTickets.forEach(t => {
     const tr = document.createElement('tr');
     tr.onclick = () => openTicketDetail(t.id);
 
@@ -410,67 +390,22 @@ function openTicketDetail(ticketId) {
   if (!ticket) return;
 
   activeTicketId = ticket.id;
-
-  // Header
   document.getElementById('drawer-ticket-id').innerText = ticket.id;
   document.getElementById('drawer-issue-title').innerText = ticket.issueSummary;
   document.getElementById('drawer-priority-badge').className = `badge ${getPriorityBadgeClass(ticket.priority)}`;
   document.getElementById('drawer-priority-badge').innerText = `${ticket.priority} PRIORITY`;
   document.getElementById('drawer-risk-badge').innerText = `RISK: ${ticket.riskScore}%`;
-
-  // Customer Card
   document.getElementById('drawer-customer-name').innerText = ticket.customer;
-  document.getElementById('drawer-account-id').innerText = ticket.accountId;
-  document.getElementById('drawer-customer-tier').innerText = ticket.tier;
-  document.getElementById('drawer-customer-location').innerText = ticket.location;
+  document.getElementById('drawer-customer-email').innerText = ticket.customerEmail || 'Not provided';
   document.getElementById('drawer-complaint-text').innerText = `"${ticket.complaintText}"`;
-
-  // AI Analysis Grid
-  document.getElementById('drawer-category').innerText = ticket.category;
-  document.getElementById('drawer-sentiment').innerText = ticket.sentiment;
-  document.getElementById('drawer-priority').innerText = ticket.priority;
-  document.getElementById('drawer-risk').innerText = `${ticket.riskScore}%`;
-
-  // Why Escalated List
   const reasonsList = document.getElementById('drawer-escalation-reasons');
   reasonsList.innerHTML = '';
-  ticket.whyEscalated.forEach(r => {
+  (ticket.whyEscalated || ['Technician review required']).forEach(r => {
     const li = document.createElement('li');
     li.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(r)}`;
     reasonsList.appendChild(li);
   });
-
-  // AI Summary & Recommendation
-  document.getElementById('drawer-ai-summary').innerText = ticket.aiSummary;
-  document.getElementById('drawer-ai-recommendation').innerText = ticket.aiRecommendation;
-
-  // RAG Sources
-  const ragBox = document.getElementById('drawer-rag-sources');
-  ragBox.innerHTML = '';
-  ticket.ragSources.forEach(s => {
-    const span = document.createElement('span');
-    span.className = 'rag-chip';
-    span.innerHTML = `<i class="fa-solid fa-book-bookmark"></i> ${escapeHtml(s)}`;
-    ragBox.appendChild(span);
-  });
-
-  // Timeline
-  const timelineBox = document.getElementById('drawer-timeline');
-  timelineBox.innerHTML = '';
-  ticket.timeline.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'timeline-item';
-    div.innerHTML = `
-      <span class="timeline-time">${item.time}</span>
-      <span class="timeline-event">${escapeHtml(item.event)}</span>
-    `;
-    timelineBox.appendChild(div);
-  });
-
-  // Notes
-  renderNotesList(ticket);
-
-  // Show Drawer
+  document.getElementById('drawer-technician-response').value = '';
   document.getElementById('drawer-overlay').classList.add('active');
   document.getElementById('ticket-detail-drawer').classList.add('active');
 }
@@ -479,25 +414,6 @@ function closeTicketDrawer() {
   document.getElementById('drawer-overlay').classList.remove('active');
   document.getElementById('ticket-detail-drawer').classList.remove('active');
   activeTicketId = null;
-}
-
-function renderNotesList(ticket) {
-  const notesContainer = document.getElementById('drawer-notes-list');
-  notesContainer.innerHTML = '';
-  if (!ticket.notes || ticket.notes.length === 0) {
-    notesContainer.innerHTML = '<div class="note-item empty-note">No internal notes added yet.</div>';
-    return;
-  }
-
-  ticket.notes.forEach(n => {
-    const div = document.createElement('div');
-    div.className = 'note-item';
-    div.innerHTML = `
-      <div>${escapeHtml(n.text)}</div>
-      <div class="note-meta"><i class="fa-solid fa-user-pen"></i> ${escapeHtml(n.meta)}</div>
-    `;
-    notesContainer.appendChild(div);
-  });
 }
 
 /**
@@ -519,11 +435,6 @@ function setupEventListeners() {
       if (tabId === 'dashboard') {
         document.getElementById('page-title').innerText = 'Agent Dashboard';
         document.getElementById('page-subtitle').innerText = 'Immediate view of complaints requiring human intelligence';
-      } else if (tabId === 'my-queue') {
-        document.getElementById('page-title').innerText = 'My Work Queue';
-        const currentAgentId = activeAdmin ? activeAdmin.id : '#AGT-8824';
-        const currentAgentName = activeAdmin ? activeAdmin.name : 'Agent';
-        document.getElementById('page-subtitle').innerText = `Personal assigned exception queue for ${currentAgentName} (${currentAgentId})`;
       } else if (tabId === 'all-escalated') {
         document.getElementById('page-title').innerText = 'All System Escalations';
         document.getElementById('page-subtitle').innerText = 'Full registry of automated exception triage cases';
@@ -542,138 +453,63 @@ function setupEventListeners() {
   // Quick Metric Card Filters
   document.querySelectorAll('.metric-card').forEach(card => {
     card.addEventListener('click', () => {
-      // Switch to queue
-      document.querySelector('[data-tab="my-queue"]').click();
-    });
-  });
-
-  // Queue Tree Branch Pills
-  document.querySelectorAll('.branch-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      document.querySelectorAll('.branch-pill').forEach(p => p.classList.remove('active-filter'));
-      pill.classList.add('active-filter');
-      currentFilterPriority = pill.getAttribute('data-priority').toLowerCase();
-      renderMyQueueTable();
+      document.querySelector('[data-tab="all-escalated"]').click();
     });
   });
 
   // View All Queue Button on Dashboard
   document.getElementById('view-all-queue-btn').addEventListener('click', () => {
-    document.querySelector('[data-tab="my-queue"]').click();
+    document.querySelector('[data-tab="all-escalated"]').click();
   });
 
-  // Add Internal Note
-  document.getElementById('add-note-btn').addEventListener('click', () => {
-    if (!activeTicketId) return;
-    const input = document.getElementById('new-note-text');
-    const text = input.value.trim();
-    if (!text) return;
+  // Escalation filter chips
+  document.querySelectorAll('.chip-filters .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip-filters .chip').forEach(item => item.classList.remove('active'));
+      chip.classList.add('active');
+      currentEscalationFilter = chip.dataset.filter || 'all';
+      renderDashboardTable();
+      renderAllEscalatedTable();
+    });
+  });
 
-    const ticket = tickets.find(t => t.id === activeTicketId);
-    if (ticket) {
-      if (!ticket.notes) ticket.notes = [];
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const currentAgentName = activeAdmin ? activeAdmin.name : 'Agent';
-      ticket.notes.push({
-        text: text,
-        meta: `${currentAgentName} • ${timeStr}`
+  document.getElementById('drawer-send-resolution-btn').addEventListener('click', async () => {
+    if (!activeTicketId) return;
+    const responseBox = document.getElementById('drawer-technician-response');
+    const sendButton = document.getElementById('drawer-send-resolution-btn');
+    const responseText = responseBox.value.trim();
+    if (!responseText || sendButton.disabled) return;
+
+    sendButton.disabled = true;
+    const originalButtonHtml = sendButton.innerHTML;
+    sendButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Sending...</span>';
+    try {
+      const response = await fetch('/api/admin/resolve-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: activeTicketId, resolved_solution: responseText })
       });
-      input.value = '';
-      renderNotesList(ticket);
-      showToast('Internal note added to ticket history', 'success');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showToast(data.detail || 'Failed to send technician response.', 'danger');
+        return;
+      }
+      showToast(data.message, data.email_status === 'sent' ? 'success' : 'warning');
+      closeTicketDrawer();
+      refreshAllViews();
+    } catch (error) {
+      showToast('Network error sending technician response.', 'danger');
+    } finally {
+      sendButton.disabled = false;
+      sendButton.innerHTML = originalButtonHtml;
     }
-  });
-
-  // Modal Actions
-  const modal = document.getElementById('action-modal');
-  const closeModals = () => modal.classList.remove('active');
-
-  document.getElementById('close-modal-btn').addEventListener('click', closeModals);
-  document.getElementById('modal-cancel-btn').addEventListener('click', closeModals);
-
-  // Action Buttons in Drawer
-  document.getElementById('action-resolve-btn').addEventListener('click', () => {
-    if (!activeTicketId) return;
-    document.getElementById('modal-title').innerText = `Resolve Ticket ${activeTicketId}`;
-    document.getElementById('modal-description').innerText = 'Submit human decision and close this escalated exception.';
-    document.getElementById('modal-response-text').value = 'Issue investigated and resolved per AI recommendation. Field team dispatched / credit issued.';
-    modal.classList.add('active');
-
-    document.getElementById('modal-submit-btn').onclick = () => {
-      const ticket = tickets.find(t => t.id === activeTicketId);
-      if (ticket) {
-        ticket.status = 'RESOLVED';
-        const currentAgentName = activeAdmin ? activeAdmin.name : 'Agent';
-        ticket.timeline.push({
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          event: `Resolved by ${currentAgentName} with response: "${document.getElementById('modal-response-text').value}"`
-        });
-        showToast(`Ticket ${ticket.id} marked as RESOLVED`, 'success');
-        closeModals();
-        closeTicketDrawer();
-        refreshAllViews();
-      }
-    };
-  });
-
-  document.getElementById('action-request-info-btn').addEventListener('click', () => {
-    if (!activeTicketId) return;
-    document.getElementById('modal-title').innerText = `Request Info for Ticket ${activeTicketId}`;
-    document.getElementById('modal-description').innerText = 'Send targeted request to customer for missing hardware or line details.';
-    document.getElementById('modal-response-text').value = 'Please provide your ONT device serial number located on the back panel sticker.';
-    modal.classList.add('active');
-
-    document.getElementById('modal-submit-btn').onclick = () => {
-      const ticket = tickets.find(t => t.id === activeTicketId);
-      if (ticket) {
-        const currentAgentName = activeAdmin ? activeAdmin.name : 'Agent';
-        ticket.timeline.push({
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          event: `Agent (${currentAgentName}) requested customer input: "${document.getElementById('modal-response-text').value}"`
-        });
-        showToast(`Information request dispatched to customer`, 'warning');
-        closeModals();
-        openTicketDetail(ticket.id); // re-render timeline
-      }
-    };
-  });
-
-  document.getElementById('action-escalate-further-btn').addEventListener('click', () => {
-    if (!activeTicketId) return;
-    document.getElementById('modal-title').innerText = `Escalate Ticket ${activeTicketId} to Tier 3`;
-    document.getElementById('modal-description').innerText = 'Transfer ticket to Tier 3 Field Operations Specialist / Network Lead.';
-    document.getElementById('modal-response-text').value = 'Requires specialized optical fiber splice equipment at main Sector switch.';
-    modal.classList.add('active');
-
-    document.getElementById('modal-submit-btn').onclick = () => {
-      const ticket = tickets.find(t => t.id === activeTicketId);
-      if (ticket) {
-        ticket.priority = 'HIGH';
-        ticket.riskScore = 99;
-        const currentAgentName = activeAdmin ? activeAdmin.name : 'Agent';
-        ticket.timeline.push({
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          event: `Escalated to Tier 3 Network Ops Lead by ${currentAgentName}`
-        });
-        showToast(`Ticket ${ticket.id} escalated to Tier 3 Lead`, 'danger');
-        closeModals();
-        closeTicketDrawer();
-        refreshAllViews();
-      }
-    };
   });
 
   // Global Search Filter
   document.getElementById('global-search').addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    filterTablesBySearch(query);
-  });
-
-  // Priority Header Filter Dropdown
-  document.getElementById('priority-filter').addEventListener('change', (e) => {
-    const p = e.target.value;
-    currentFilterPriority = p;
-    renderMyQueueTable();
+    currentSearchQuery = e.target.value.trim().toLowerCase();
+    renderDashboardTable();
+    renderAllEscalatedTable();
   });
 
   // Refresh Button
@@ -686,18 +522,6 @@ function setupEventListeners() {
 function refreshAllViews() {
   fetchTicketsFromBackend();
   fetchNegativeFeedback();
-}
-
-function filterTablesBySearch(query) {
-  const rows = document.querySelectorAll('.data-table tbody tr');
-  rows.forEach(row => {
-    const text = row.innerText.toLowerCase();
-    if (text.includes(query)) {
-      row.style.display = '';
-    } else {
-      row.style.display = 'none';
-    }
-  });
 }
 
 /**
@@ -852,10 +676,19 @@ function closeNegFeedbackModal() {
 async function submitResolvedSolution() {
   if (!activeNegFeedbackId) return;
 
+  const submitBtn = document.getElementById('neg-modal-submit-btn');
+  if (submitBtn?.disabled) return;
+
   const solutionText = document.getElementById('neg-modal-solution-text').value.trim();
   if (!solutionText) {
     showToast('Please enter the correct resolution before submitting.', 'warning');
     return;
+  }
+
+  const originalButtonHtml = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
   }
 
   try {
@@ -881,6 +714,11 @@ async function submitResolvedSolution() {
     }
   } catch (err) {
     showToast('Network error submitting resolution.', 'danger');
+  } finally {
+    if (submitBtn && document.getElementById('neg-feedback-modal')?.classList.contains('active')) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalButtonHtml;
+    }
   }
 }
 

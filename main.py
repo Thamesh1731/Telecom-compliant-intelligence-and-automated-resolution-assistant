@@ -14,6 +14,7 @@ import sys
 import uuid
 import re
 import json
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -117,6 +118,7 @@ class NegativeFeedbackRequest(BaseModel):
     subcategory: Optional[str] = "General"
     ai_solution: str
     feedback: str
+    email: Optional[str] = ""
 
 
 class ResolveFeedbackRequest(BaseModel):
@@ -275,6 +277,7 @@ async def submit_negative_feedback(req: NegativeFeedbackRequest):
         "complaint": req.complaint,
         "ai_solution": req.ai_solution,
         "feedback": req.feedback,
+        "email": req.email.strip(),
         "status": "pending",
         "submitted_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -297,42 +300,69 @@ async def get_negative_feedback():
 
 
 @app.post("/api/admin/resolve-feedback")
-async def resolve_feedback(req: ResolveFeedbackRequest):
+def resolve_feedback(req: ResolveFeedbackRequest):
     """
     Admin/technician submits the correct solution for a negative feedback item.
     Moves it from pending to resolved in resolver_base.
     """
-    # Find the item
-    item = None
-    for i, fb in enumerate(NEGATIVE_FEEDBACK_ITEMS):
-        if fb["feedback_id"] == req.feedback_id:
-            item = fb
-            break
+    # Serialize resolution and email delivery so repeated clicks cannot create
+    # duplicate resolver files or send duplicate emails.
+    with RESOLUTION_LOCK:
+        item = next(
+            (fb for fb in NEGATIVE_FEEDBACK_ITEMS if fb["feedback_id"] == req.feedback_id),
+            None,
+        )
+        resolved_file = RESOLVER_RESOLVED / f"{req.feedback_id}.json"
+        if item and item.get("status") == "resolved":
+            raise HTTPException(status_code=409, detail="This feedback has already been resolved.")
+        if resolved_file.exists():
+            raise HTTPException(status_code=409, detail="This feedback has already been resolved.")
+        if not item:
+            raise HTTPException(status_code=404, detail=f"Feedback item {req.feedback_id} not found.")
 
-    if not item:
-        raise HTTPException(status_code=404, detail=f"Feedback item {req.feedback_id} not found.")
+        item["status"] = "resolved"
+        item["resolved_solution"] = req.resolved_solution
+        item["resolved_at"] = datetime.now(timezone.utc).isoformat()
 
-    # Update item
-    item["status"] = "resolved"
-    item["resolved_solution"] = req.resolved_solution
-    item["resolved_at"] = datetime.now(timezone.utc).isoformat()
+        pending_file = RESOLVER_PENDING / f"{req.feedback_id}.json"
+        resolver_markdown_file = store_resolver_solution(item, req.resolved_solution)
 
-    # Move file from pending to resolved
-    pending_file = RESOLVER_PENDING / f"{req.feedback_id}.json"
-    resolved_file = RESOLVER_RESOLVED / f"{req.feedback_id}.json"
+        email_status = "sent"
+        email_error = None
+        try:
+            send_resolution_email(
+                recipient=item.get("email", ""),
+                complaint=item["complaint"],
+                user_feedback=item["feedback"],
+                technician_solution=req.resolved_solution,
+                feedback_id=req.feedback_id,
+            )
+        except Exception as exc:
+            email_status = "failed"
+            email_error = str(exc)
 
-    resolved_file.write_text(json.dumps(item, indent=2), encoding="utf-8")
+        item["email_status"] = email_status
+        item["email_sent_at"] = datetime.now(timezone.utc).isoformat() if email_status == "sent" else None
+        if email_error:
+            item["email_error"] = email_error
 
-    resolver_markdown_file = store_resolver_solution(item, req.resolved_solution)
+        # Save the final resolution record, including email delivery status.
+        resolved_file.write_text(json.dumps(item, indent=2), encoding="utf-8")
 
-    if pending_file.exists():
-        pending_file.unlink()
+        if pending_file.exists():
+            pending_file.unlink()
 
     return {
         "success": True,
         "feedback_id": req.feedback_id,
-        "message": "Solution submitted and stored in resolver base.",
+        "message": (
+            "Solution submitted, stored in resolver base, and emailed to the customer."
+            if email_status == "sent"
+            else "Solution submitted and stored in resolver base, but customer email delivery failed."
+        ),
         "resolver_file": str(resolver_markdown_file.relative_to(_PROJECT_ROOT)),
+        "email_status": email_status,
+        "email_error": email_error,
     }
 
 
@@ -343,6 +373,59 @@ async def resolve_feedback(req: ResolveFeedbackRequest):
 async def get_admin_tickets():
     """Return all real escalated tickets captured by the backend."""
     return {"tickets": ESCALATED_TICKETS}
+
+
+@app.post("/api/admin/resolve-ticket")
+def resolve_escalated_ticket(req: ResolveTicketRequest):
+    """Save a technician response for an escalated ticket and email the customer."""
+    with RESOLUTION_LOCK:
+        ticket = next((item for item in ESCALATED_TICKETS if item["id"] == req.ticket_id), None)
+        if not ticket:
+            raise HTTPException(status_code=404, detail=f"Escalated ticket {req.ticket_id} not found.")
+        if ticket.get("status") == "RESOLVED":
+            raise HTTPException(status_code=409, detail="This escalated ticket has already been resolved.")
+
+        resolved_solution = req.resolved_solution.strip()
+        if not resolved_solution:
+            raise HTTPException(status_code=400, detail="Resolved solution cannot be empty.")
+
+        ticket["status"] = "RESOLVED"
+        ticket["supportMessage"] = resolved_solution
+        ticket["resolvedAt"] = datetime.now(timezone.utc).isoformat()
+        email_status = "sent"
+        email_error = None
+        try:
+            send_resolution_email(
+                recipient=ticket.get("customerEmail", ""),
+                complaint=ticket["complaintText"],
+                user_feedback=ticket.get("whyEscalated", ["Escalation requested"])[0],
+                technician_solution=resolved_solution,
+                feedback_id=ticket["id"],
+            )
+        except Exception as exc:
+            email_status = "failed"
+            email_error = str(exc)
+
+        ticket["emailStatus"] = email_status
+        if email_error:
+            ticket["emailError"] = email_error
+        ticket.setdefault("timeline", []).append({
+            "time": datetime.now().strftime("%I:%M %p"),
+            "event": "Technician resolved the escalation and customer notification was "
+            + ("sent." if email_status == "sent" else "not delivered."),
+        })
+
+        return {
+            "success": True,
+            "ticket_id": ticket["id"],
+            "email_status": email_status,
+            "email_error": email_error,
+            "message": (
+                "Support message saved and emailed to the customer."
+                if email_status == "sent"
+                else "Support message saved, but customer email delivery failed."
+            ),
+        }
 
 
 # ---------------------------------------------------------------------------
