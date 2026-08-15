@@ -1,0 +1,65 @@
+name: 🚀 Automatic AWS CI/CD Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy-frontend-s3:
+    name: 📦 Build & Deploy Frontend to AWS S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build React Application
+        env:
+          VITE_API_BASE_URL: "http://${{ secrets.EC2_HOST }}:8000"
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Deploy Assets to S3 Bucket
+        run: |
+          aws s3 sync frontend/dist/ s3://${{ secrets.AWS_S3_BUCKET }}/ --delete
+
+  deploy-backend-ec2:
+    name: 🖥️ Deploy FastAPI Backend to AWS EC2
+    runs-on: ubuntu-latest
+    needs: deploy-frontend-s3
+    steps:
+      - name: SSH and Deploy to EC2 Instance
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            cd ~/Telecom-compliant-intelligence-and-automated-resolution-assistant
+            git pull origin main || git pull origin master
+            source .venv/bin/activate
+            pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+            pip install --no-cache-dir -r requirements.txt
+            sudo systemctl restart telecom-backend
