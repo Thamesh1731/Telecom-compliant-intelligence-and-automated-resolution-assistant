@@ -124,18 +124,20 @@ export default function ComplaintForm() {
     setFeedbackChoice('yes');
   };
 
-  // Helper to parse solution blocks
-  const parseSolutionText = (text) => {
-    if (!text) return { problem: "", solution: "", reason: "", confidence: "" };
+  // Helper to parse solution blocks robustly
+  const parseSolutionText = (textInput) => {
+    if (!textInput) return { problem: "", solution: "", reason: "" };
+
+    let text = typeof textInput === "string" ? textInput : JSON.stringify(textInput, null, 2);
     
     let problem = "";
     let solution = "";
     let reason = "";
 
-    const probMatch = text.match(/Problem:\s*([\s\S]*?)(?=\n\nRecommended Solution:|\nRecommended Solution:|$)/i);
+    const probMatch = text.match(/Problem:\s*([\s\S]*?)(?=\n\nRecommended Solution:|\nRecommended Solution:|\nReason:|$)/i);
     if (probMatch) problem = probMatch[1].trim();
 
-    const solMatch = text.match(/Recommended Solution:\s*([\s\S]*?)(?=\n\nReason:|\nReason:|$)/i);
+    const solMatch = text.match(/(?:Recommended Solution|Solution):\s*([\s\S]*?)(?=\n\nReason:|\nReason:|\nEscalation:|$)/i);
     if (solMatch) solution = solMatch[1].trim();
 
     const reasMatch = text.match(/Reason:\s*([\s\S]*?)(?=\n\nEscalation:|\nEscalation:|$)/i);
@@ -152,7 +154,8 @@ export default function ComplaintForm() {
   // Wide 2-Column Dashboard Result View
   // -----------------------------------------------------------------------
   const ResultDashboard = ({ data }) => {
-    const parsed = parseSolutionText(data.resolution || data.solution);
+    const rawSolution = data.solution || data.resolution || data.aiRecommendation || "";
+    const parsed = parseSolutionText(rawSolution);
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full items-stretch">
@@ -249,7 +252,7 @@ export default function ComplaintForm() {
           </div>
 
           {/* Solution Contents */}
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 max-h-[42vh] overflow-y-auto pr-1">
             {parsed.problem && (
               <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-800">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">
@@ -280,6 +283,17 @@ export default function ComplaintForm() {
                 <p className="text-slate-300 text-xs leading-relaxed">
                   {parsed.reason}
                 </p>
+              </div>
+            )}
+
+            {!parsed.problem && !parsed.solution && !parsed.reason && (
+              <div className="bg-slate-900/90 rounded-lg p-3 border border-cyan-500/30">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-cyan-400 mb-1">
+                  Recommended Solution & Action Steps
+                </p>
+                <div className="text-slate-100 text-xs leading-relaxed whitespace-pre-wrap font-sans">
+                  {rawSolution || "Diagnostic analysis complete. Standard troubleshooting procedures apply."}
+                </div>
               </div>
             )}
           </div>
