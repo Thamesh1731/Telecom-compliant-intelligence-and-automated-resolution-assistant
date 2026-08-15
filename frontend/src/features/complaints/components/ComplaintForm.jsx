@@ -9,7 +9,7 @@ export default function ComplaintForm() {
     city: "",
     state: "Tamil Nadu",
     zipCode: "",
-    filingOnBehalf: "No",
+    email: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,7 +80,7 @@ export default function ComplaintForm() {
       city: "",
       state: "Tamil Nadu",
       zipCode: "",
-      filingOnBehalf: "No",
+      email: "",
     });
   };
 
@@ -520,34 +520,19 @@ export default function ComplaintForm() {
               />
             </div>
 
-            <div className="pt-2">
+            <div>
               <label className="block text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">
-                Filing on behalf of someone?
+                Email Address
               </label>
-              <div className="flex items-center space-x-6 text-sm text-slate-300">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="filingOnBehalf"
-                    value="Yes"
-                    checked={formData.filingOnBehalf === "Yes"}
-                    onChange={handleChange}
-                    className="text-cyan-500 focus:ring-cyan-500 bg-slate-950 border-slate-800"
-                  />
-                  <span>Yes</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="filingOnBehalf"
-                    value="No"
-                    checked={formData.filingOnBehalf === "No"}
-                    onChange={handleChange}
-                    className="text-cyan-500 focus:ring-cyan-500 bg-slate-950 border-slate-800"
-                  />
-                  <span>No</span>
-                </label>
-              </div>
+              <input
+                type="email"
+                name="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="name@example.com"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm transition"
+              />
             </div>
 
             <div className="pt-4">

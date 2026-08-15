@@ -96,6 +96,7 @@ class ComplaintRequest(BaseModel):
     city: Optional[str] = ""
     state: Optional[str] = ""
     zipCode: Optional[str] = ""
+    email: Optional[str] = ""
     filingOnBehalf: Optional[str] = "No"
 
     @field_validator("complaint")
@@ -212,7 +213,8 @@ async def process_complaint(request: ComplaintRequest):
     # Formulate standardized admin ticket structure if escalated
     ticket_data = {
         "id": ticket_id,
-        "customer": request.filingOnBehalf == "Yes" and "Representative Filing" or "Customer Submission",
+        "customer": request.email if request.email else (request.filingOnBehalf == "Yes" and "Representative Filing" or "Customer Submission"),
+        "email": request.email or "",
         "accountId": f"#ACC-{str(uuid.uuid4().int)[:5]}",
         "tier": "Residential / Business",
         "location": f"{request.city or 'Unknown'} - {request.state or 'Sector'}",
