@@ -23,7 +23,7 @@ export default function App() {
       </div>
 
       {/* Foreground Form Interface */}
-      <div className="relative z-10 w-full py-10">
+      <div className="relative z-10 w-full h-screen overflow-hidden flex items-center justify-center">
         <ComplaintForm />
       </div>
 
