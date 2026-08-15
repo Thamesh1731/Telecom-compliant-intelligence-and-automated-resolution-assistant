@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import BlurText from "../../../components/BlurText";
 import SpotLightCard from "../../../components/SpotLightCard";
-import { submitComplaintTicket, submitNegativeFeedback } from "../api/complaintServices";
+import { submitComplaintTicket, getComplaintStatus, submitNegativeFeedback } from "../api/complaintServices";
 
 export default function ComplaintForm() {
   const [formData, setFormData] = useState({
@@ -33,6 +33,11 @@ export default function ComplaintForm() {
         return "text-emerald-400 bg-emerald-900/30 border-emerald-500/50 shadow-[0_0_10px_rgba(52,211,153,0.15)]";
       case "Closed":
         return "text-slate-400 bg-slate-800/50 border-slate-600/50 shadow-[0_0_10px_rgba(148,163,184,0.15)]";
+      case "QUEUED":
+      case "PROCESSING":
+        return "text-cyan-400 bg-cyan-900/30 border-cyan-500/50 shadow-[0_0_10px_rgba(34,211,238,0.15)]";
+      case "FAILED":
+        return "text-red-400 bg-red-900/30 border-red-500/50 shadow-[0_0_10px_rgba(248,113,113,0.15)]";
       default:
         return "text-slate-400 bg-slate-800/50 border-slate-600/50";
     }
@@ -55,6 +60,20 @@ export default function ComplaintForm() {
     try {
       const data = await submitComplaintTicket(formData);
       setResult(data);
+      if (data.status === "QUEUED" || data.status === "PROCESSING") {
+        const pollStatus = async () => {
+          try {
+            const latest = await getComplaintStatus(data.complaint_id);
+            setResult(latest);
+            if (!["RESOLVED", "ESCALATED", "FAILED"].includes(latest.status)) {
+              window.setTimeout(pollStatus, 1000);
+            }
+          } catch (pollError) {
+            setError(pollError.message || "Unable to retrieve complaint status.");
+          }
+        };
+        window.setTimeout(pollStatus, 1000);
+      }
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes("failed to fetch")) {
         setError(
@@ -180,6 +199,7 @@ export default function ComplaintForm() {
       )}
 
       {/* Customer Resolution Feedback Module */}
+      {(data.resolution || data.solution) && (
       <div className="rounded-xl bg-slate-900/90 border border-slate-700/60 p-4 space-y-3 shadow-lg">
         <div className="flex items-center space-x-2">
           <svg className="w-4 h-4 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,6 +284,7 @@ export default function ComplaintForm() {
           </div>
         )}
       </div>
+      )}
 
       {/* Escalation */}
       {data.escalationRequired && (

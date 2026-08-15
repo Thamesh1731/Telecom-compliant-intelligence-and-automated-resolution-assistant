@@ -1,0 +1,13 @@
+{
+  "feedback_id": "NFB-20260815-880279",
+  "complaint_id": "93f0659a-82b1-4fc2-ac4e-0d030c6898bc",
+  "category": "plans_recharge",
+  "subcategory": "Recharge Completed but Balance or Plan Not Updated",
+  "complaint": "My recharge plan is billed twice",
+  "ai_solution": "Problem:\nThe customer's recharge plan is billed twice.\n\nRecommended Solution:\n1. Check payment status to determine whether the transaction is:\n   - Pending\n   - Successful\n   - Failed\n   - Reversed\n2. Verify the recharge transaction in the provider's account or transaction history.\n3. Check the current account balance to ensure it has increased by the recharge amount.\n4. Verify the correct account or line was used for the recharge.\n5. If the recharge is still processing, provide the current transaction status and avoid unnecessary duplicate payments.\n\nReason:\nThis solution is based on the retrieved knowledge that a recharge may be still processing, and a duplicate payment may occur if the original transaction is still processing. It is essential to verify the recharge transaction and account balance to ensure the correct resolution.\n\nEscalation:\nNo\n\nEscalation Reason:\nNot required\n\nConfidence:\nMEDIUM\n\nNote: The customer's complaint is generally matched with the knowledge base, but some information is missing, and multiple solutions are possible. Therefore, the confidence level is set to MEDIUM.",
+  "feedback": "The issue is not resolved",
+  "status": "resolved",
+  "submitted_at": "2026-08-15T05:31:50.081866+00:00",
+  "resolved_solution": "Uninstall the application and install again",
+  "resolved_at": "2026-08-15T05:33:10.000099+00:00"
+}
