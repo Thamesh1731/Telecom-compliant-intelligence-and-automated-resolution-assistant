@@ -43,7 +43,11 @@ jobs:
 
       - name: Deploy Assets to S3 Bucket
         run: |
-          aws s3 sync frontend/dist/ s3://${{ secrets.AWS_S3_BUCKET }}/ --delete
+          aws s3 sync frontend/dist/ s3://${{ secrets.AWS_S3_BUCKET || 'telecom-assistant-frontend-free-2026' }}/ --delete
+
+      - name: Clear CloudFront Cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID || 'E32TBBKW2WX5ZV' }} --paths "/*" || true
 
   deploy-backend-ec2:
     name: 🖥️ Deploy FastAPI Backend to AWS EC2
@@ -53,7 +57,7 @@ jobs:
       - name: SSH and Deploy to EC2 Instance
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_HOST || '54.91.159.187' }}
           username: ${{ secrets.EC2_USERNAME || 'ubuntu' }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
