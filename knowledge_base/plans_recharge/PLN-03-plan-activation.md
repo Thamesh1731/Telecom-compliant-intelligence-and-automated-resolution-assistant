@@ -206,12 +206,9 @@ Escalate when:
 
 - Payment was successful but the plan remains inactive.
 - Plan status is inconsistent with the transaction history.
-- Plan activation remains pending beyond the provider's applicable
-  processing period.
-- The plan was applied incorrectly.
+- Plan activation remains pending beyond the provider's applicable processing period.
 - A required account correction is necessary.
-- The customer remains without expected service after successful plan
-  activation.
+- The customer remains without expected service after successful plan activation.
 - Multiple customers experience similar activation failures.
 - A provider-side activation or account-system problem is suspected.
 - Manual plan activation or correction is required.

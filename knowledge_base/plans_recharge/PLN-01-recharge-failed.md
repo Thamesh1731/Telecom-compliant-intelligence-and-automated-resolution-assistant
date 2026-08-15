@@ -213,8 +213,7 @@ Escalate when:
 - A valid refill card/PIN cannot be redeemed.
 - A provider-side payment-system issue is suspected.
 - The account has a restriction preventing recharge.
-- The customer may lose service because the recharge cannot be
-  completed.
+- The customer may lose service because the recharge cannot be completed.
 - Manual investigation is required.
 
 ## Agent Information to Record

@@ -173,10 +173,8 @@ troubleshooting, investigate the router, gateway, service, or network.
 
 Escalate when:
 
-- Multiple devices continue to experience Wi-Fi problems after
-  standard troubleshooting.
-- Wi-Fi remains unstable after restarting the router.
-- The router or gateway appears to malfunction.
+- Multiple devices continue to experience Wi-Fi problems after standard troubleshooting.
+- Wi-Fi remains unstable after restarting the router. 
 - Wired and wireless connections both experience problems.
 - The customer reports persistent connectivity problems that cannot be
   resolved through standard troubleshooting.

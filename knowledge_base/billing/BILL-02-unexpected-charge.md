@@ -131,9 +131,7 @@ The customer may require additional identity or account verification.
 Escalate when:
 
 - Authorization for the charge cannot be established.
-- The customer formally disputes the charge.
-- The charge involves suspected fraud.
-- An account or service was changed without customer authorization.
+- The customer formally disputes the charge. 
 - A third-party charge cannot be identified or resolved.
 - A billing credit or correction requires manual review.
 - The customer has repeatedly reported the same unresolved charge.

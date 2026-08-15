@@ -94,7 +94,7 @@ Escalate when:
 - The replacement request cannot be processed.
 - The account contains conflicting information.
 - The replacement requires specialist authorization.
-- The customer's number or service cannot be transferred to the replacement SIM through the standard process.
+- The customer's number or service cannot be transferred to the replacement SIM through the standard process. 
 
 ## Important Notes
 

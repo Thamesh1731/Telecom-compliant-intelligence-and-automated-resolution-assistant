@@ -92,11 +92,9 @@ The support agent should:
 Escalate when:
 
 - The SIM remains unable to register after standard troubleshooting.
-- The line appears active but cannot connect to the network.
 - Provisioning information is inconsistent.
-- The issue persists across compatible devices.
+- The issue persists across compatible devices. 
 - A network-side investigation is required.
-- SIM replacement or re-provisioning may be necessary.
 
 ## Important Notes
 

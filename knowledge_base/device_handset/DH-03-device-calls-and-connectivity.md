@@ -106,8 +106,7 @@ The support agent should:
 
 Escalate when:
 
-- Connectivity fails after standard troubleshooting.
-- The device has a suspected hardware fault.
+- Connectivity fails after standard troubleshooting. 
 - Multiple connectivity functions fail simultaneously without an identifiable service issue.
 - The device requires authorized repair.
 - A persistent software or configuration problem cannot be resolved remotely.

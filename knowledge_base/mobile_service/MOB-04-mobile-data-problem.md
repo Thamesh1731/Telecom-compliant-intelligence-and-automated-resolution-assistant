@@ -235,13 +235,10 @@ technical investigation.
 Escalate when:
 
 - Mobile data remains unavailable after standard troubleshooting.
-- Mobile data remains consistently slow despite adequate signal and
-  normal plan conditions.
-- Multiple customers appear to experience similar problems in the same
-  geographic area.
+- Mobile data remains consistently slow despite adequate signal and normal plan conditions.
+- Multiple customers appear to experience similar problems in the same geographic area.
 - A network-side problem is suspected.
 - The account or data service requires carrier-side investigation.
-- SIM/eSIM provisioning appears incorrect.
 - The problem repeatedly returns after temporary recovery.
 - The issue cannot be resolved using available troubleshooting.
 

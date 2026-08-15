@@ -288,15 +288,13 @@ After resolution, verify:
 
 Escalate when:
 
-- Calls consistently drop despite adequate signal and standard
-  troubleshooting.
+- Calls consistently drop despite adequate signal and standard troubleshooting.
 - Poor call quality occurs across multiple locations.
 - Account and line records indicate that calling should work normally.
-- SIM/eSIM provisioning appears incorrect.
 - Multiple customers report similar call-quality problems.
 - A network outage or degradation is suspected.
 - A routing issue is suspected.
-- The problem persists after standard troubleshooting.
+- The problem persists after standard troubleshooting. 
 - Manual provider-side investigation is required.
 
 ## Potential Voice Quality Incident
