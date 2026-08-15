@@ -4,11 +4,7 @@
  * Uses VITE_API_BASE_URL from the frontend .env file.
  */
 
-const API_BASE_URL = 
-  import.meta.env.VITE_API_BASE_URL || 
-  (typeof window !== "undefined" && window.location.protocol === "https:"
-    ? "https://dfs1s7ot8io52.cloudfront.net"
-    : "http://54.91.159.187:8000");
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
  * Submit a complaint ticket to the backend RAG pipeline.
