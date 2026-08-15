@@ -47,7 +47,6 @@ Escalate when:
 
 - Repeated disconnections continue after troubleshooting.
 - Multiple devices are affected.
-- A wired connection also experiences interruptions.
 - A service outage or network-side fault is suspected.
 - The customer has repeatedly reported the same unresolved issue.
 

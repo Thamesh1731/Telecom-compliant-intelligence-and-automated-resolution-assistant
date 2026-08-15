@@ -212,11 +212,9 @@ Escalate when:
 - Multiple messaging functions fail.
 - Multiple customers appear to experience the same messaging problem.
 - The issue persists across different locations.
-- SIM/eSIM provisioning appears incorrect.
 - Account or carrier-side investigation is required.
 - Messages repeatedly fail despite normal cellular service.
-- The problem cannot be resolved using available device-level
-  troubleshooting.
+- The problem cannot be resolved using available device-level troubleshooting.
 
 ## Agent Information to Record
 

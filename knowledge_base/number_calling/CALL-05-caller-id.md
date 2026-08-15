@@ -291,7 +291,6 @@ Escalate when:
 - The wrong number is consistently presented to multiple recipients.
 - Account records show an incorrect number assignment.
 - Caller ID remains incorrect after standard troubleshooting.
-- SIM/eSIM provisioning appears incorrect.
 - The issue began after number porting.
 - Calls intended for another number reach the customer.
 - Number routing appears incorrect.

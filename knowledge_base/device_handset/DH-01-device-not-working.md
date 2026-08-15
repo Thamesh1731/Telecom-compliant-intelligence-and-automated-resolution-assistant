@@ -81,12 +81,10 @@ The support agent should:
 Escalate when:
 
 - The device remains completely unresponsive.
-- The device repeatedly crashes or restarts.
-- A hardware failure is suspected.
+- The device repeatedly crashes or restarts. 
 - The device has physical damage affecting operation.
 - The device has suffered liquid exposure.
 - Standard troubleshooting does not resolve the issue.
-- Authorized repair or replacement is required.
 
 ## Important Notes
 

@@ -288,12 +288,8 @@ Escalate when:
 
 - Outgoing calls work but all incoming calls fail.
 - Account and service records indicate incoming calling should work.
-- Number provisioning or routing appears incorrect.
-- SIM/eSIM provisioning appears incorrect.
 - The problem persists after standard troubleshooting.
 - Multiple customers report similar incoming-call failures.
-- A carrier-routing issue is suspected.
-- A number-porting issue is suspected.
 - Manual provider-side intervention is required.
 
 ## Potential Incoming-Call Incident

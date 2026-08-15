@@ -215,10 +215,8 @@ Escalate when:
 
 - Calls repeatedly drop after standard troubleshooting.
 - Calls drop across multiple locations.
-- Multiple customers appear to experience similar problems in the same
-  geographic area.
+- Multiple customers appear to experience similar problems in the same geographic area.
 - A network-side issue is suspected.
-- SIM/eSIM provisioning appears incorrect.
 - The account or service requires carrier-side investigation.
 - Device hardware may be faulty.
 - The issue repeatedly returns after temporary recovery.

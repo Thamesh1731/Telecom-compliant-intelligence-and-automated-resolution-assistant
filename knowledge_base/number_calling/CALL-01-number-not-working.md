@@ -270,7 +270,6 @@ After resolution, verify:
 
 Escalate when:
 
-- The mobile line is active but calls remain unavailable.
 - Account and service records indicate calling should work.
 - SIM/eSIM provisioning appears incorrect.
 - Number routing or provisioning appears incorrect.

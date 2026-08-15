@@ -169,8 +169,7 @@ Escalate when:
 - The correct account/line cannot be determined.
 - Plan activation failed after confirmed payment.
 - Service remains restricted despite a confirmed successful recharge.
-- The transaction appears completed but account records are
-  inconsistent.
+- The transaction appears completed but account records are inconsistent.
 - Multiple customers report similar missing-recharge problems.
 - Provider-side system failure is suspected.
 - Manual account correction is required.
