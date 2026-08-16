@@ -50,7 +50,7 @@ from email_service import send_resolution_email
 # ---------------------------------------------------------------------------
 ESCALATED_TICKETS: List[Dict[str, Any]] = []
 NEGATIVE_FEEDBACK_ITEMS: List[Dict[str, Any]] = []
-RESOLUTION_LOCK = threading.RLock()
+RESOLUTION_LOCK = threading.Lock()
 
 # Resolver Base paths
 RESOLVER_BASE = _PROJECT_ROOT / "resolver_base"
