@@ -43,12 +43,14 @@ from model_server import (
     handle_new_complaint,
 )
 from resolver_retriever import store_resolver_solution, resolver_solution_count
+from email_service import send_resolution_email
 
 # ---------------------------------------------------------------------------
 # Global State
 # ---------------------------------------------------------------------------
 ESCALATED_TICKETS: List[Dict[str, Any]] = []
 NEGATIVE_FEEDBACK_ITEMS: List[Dict[str, Any]] = []
+RESOLUTION_LOCK = threading.Lock()
 
 # Resolver Base paths
 RESOLVER_BASE = _PROJECT_ROOT / "resolver_base"
@@ -124,6 +126,10 @@ class NegativeFeedbackRequest(BaseModel):
 class ResolveFeedbackRequest(BaseModel):
     feedback_id: str
     resolved_solution: str
+
+
+class SimpleQueryRequest(BaseModel):
+    complaint: str
 
 
 class SimpleQueryRequest(BaseModel):
