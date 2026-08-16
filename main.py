@@ -128,6 +128,11 @@ class ResolveFeedbackRequest(BaseModel):
     resolved_solution: str
 
 
+class ResolveTicketRequest(BaseModel):
+    ticket_id: str
+    resolved_solution: str
+
+
 class SimpleQueryRequest(BaseModel):
     complaint: str
 
