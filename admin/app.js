@@ -14,8 +14,16 @@ let currentEscalationFilter = 'all';
 let negativeFeedbackItems = [];
 let activeNegFeedbackId = null;
 
-// Authorized Admin Personnel Registry (Loaded from admin_credentials.json)
-let authorizedPersonnel = [];
+// Authorized Admin Personnel Registry (Loaded from admin_credentials.json with fallback)
+let authorizedPersonnel = [
+  {
+    username: "Telecom",
+    hash: "d894288549e34aba1a611a9819213b491cee8ae2fb6c464a9bfcf8a4e6b0b123",
+    name: "System Administrator",
+    role: "Operations Director (L4)",
+    id: "#ADM-0001"
+  }
+];
 
 async function loadCredentials() {
   try {
