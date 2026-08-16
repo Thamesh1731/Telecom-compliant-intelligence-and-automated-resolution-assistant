@@ -151,7 +151,7 @@ export default function ComplaintForm() {
   // -----------------------------------------------------------------------
   // Wide 2-Column Dashboard Result View
   // -----------------------------------------------------------------------
-  const ResultDashboard = ({ data }) => {
+  const renderResultDashboard = (data) => {
     const rawSolution = 
       data.solution || 
       data.resolution || 
@@ -451,7 +451,7 @@ export default function ComplaintForm() {
         )}
 
         {/* Result Dashboard */}
-        {!isSubmitting && result && <ResultDashboard data={result} />}
+        {!isSubmitting && result && renderResultDashboard(result)}
 
         {/* Input Form (Wide 2-Column Layout) */}
         {!isSubmitting && !result && (
