@@ -1,32 +1,66 @@
-import React from 'react';
-import Particles from './components/Particles';
-import ComplaintForm from './features/complaints/components/ComplaintForm';
+import React from "react";
+import ComplaintForm from "./features/complaints/components/ComplaintForm";
+import { Activity, ShieldCheck, ExternalLink } from "lucide-react";
 
 export default function App() {
   return (
-    <div className="relative w-full min-h-screen bg-slate-950 overflow-hidden flex items-center justify-center">
+    <div className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-zinc-800 selection:text-zinc-100 overflow-x-hidden">
+      {/* Background Subtle Dot Pattern */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none z-0" />
 
-      {/* Background Interactive Particles Layer */}
-      <div className="absolute inset-0 z-0">
-        <Particles
-          particleColors={['#38bdf8', '#818cf8', '#ffffff']}
-          particleCount={180}
-          particleSpread={12}
-          speed={0.12}
-          particleBaseSize={90}
-          moveParticlesOnHover={true}
-          particleHoverFactor={1.5}
-          alphaParticles={true}
-          disableRotation={false}
-          pixelRatio={typeof window !== 'undefined' ? window.devicePixelRatio : 1}
-        />
-      </div>
+      {/* Top System App Bar */}
+      <header className="relative z-20 w-full border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-sm px-4 sm:px-8 py-3 flex items-center justify-between">
+        {/* Brand */}
+        <div className="flex items-center gap-3">
+          <div className="h-7 w-7 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200">
+            <Activity className="h-4 w-4 text-accent-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm tracking-tight text-zinc-100">SignalCX</span>
+              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 font-medium">
+                v2.4 Core
+              </span>
+            </div>
+          </div>
+        </div>
 
-      {/* Foreground Form Interface */}
-      <div className="relative z-10 w-full h-screen overflow-hidden flex items-center justify-center">
+        {/* Status Indicators & Admin Link */}
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400 px-2.5 py-1 rounded-md bg-zinc-900/60 border border-zinc-800/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>RAG Engine Online</span>
+          </div>
+
+          <a
+            href="/admin"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs font-medium text-zinc-300 hover:text-zinc-100 px-3 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 transition-colors duration-150"
+          >
+            <span>Escalation Console</span>
+            <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
+          </a>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="relative z-10 flex-1 flex items-center justify-center p-3 sm:p-6">
         <ComplaintForm />
-      </div>
+      </main>
 
+      {/* Footer System Telemetry */}
+      <footer className="relative z-10 w-full border-t border-zinc-900 bg-zinc-950/60 px-4 sm:px-8 py-2.5 flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-zinc-500 gap-2">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-3.5 w-3.5 text-zinc-400" />
+          <span>Multi-Agent Diagnostic & Automated Resolution Assistant</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span>Vector Retriever: ChromaDB</span>
+          <span className="hidden md:inline">•</span>
+          <span className="hidden md:inline">Inference: Groq LPU</span>
+        </div>
+      </footer>
     </div>
   );
 }
