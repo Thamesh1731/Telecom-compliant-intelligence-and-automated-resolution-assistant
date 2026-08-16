@@ -14,14 +14,34 @@ let currentEscalationFilter = 'all';
 let negativeFeedbackItems = [];
 let activeNegFeedbackId = null;
 
-// Authorized Admin Personnel Registry (Only users with permission can enter)
-const AUTHORIZED_PERSONNEL = [
-  { username: 'Telecom', pass: 'Telecom@admin', name: 'System Administrator', role: 'Operations Director (L4)', id: '#ADM-0001' },
-  { username: 'sarah.connor', pass: 'nexus2026', name: 'Sarah Connor', role: 'L2 Senior Resolution Agent', id: '#AGT-8824' },
-  { username: 'alex.mercer', pass: 'nexus2026', name: 'Alex Mercer', role: 'L3 System Administrator', id: '#SYS-9901' },
-  { username: 'elena.vance', pass: 'nexus2026', name: 'Elena Vance', role: 'Tier 3 Incident Manager', id: '#AGT-4102' },
-  { username: 'marcus.wright', pass: 'nexus2026', name: 'Marcus Wright', role: 'L2 Resolution Agent', id: '#AGT-5510' }
+// Authorized Admin Personnel Registry (Loaded from admin_credentials.json with fallback)
+let authorizedPersonnel = [
+  {
+    username: "Telecom",
+    hash: "d894288549e34aba1a611a9819213b491cee8ae2fb6c464a9bfcf8a4e6b0b123",
+    name: "System Administrator",
+    role: "Operations Director (L4)",
+    id: "#ADM-0001"
+  }
 ];
+
+async function loadCredentials() {
+  try {
+    const res = await fetch('admin_credentials.json');
+    if (res.ok) {
+      authorizedPersonnel = await res.json();
+    }
+  } catch (err) {
+    console.error('Failed to load credentials:', err);
+  }
+}
+
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);                    
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 let activeAdmin = null;
 
@@ -40,7 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initApp();
 });
 
-function initApp() {
+async function initApp() {
+  await loadCredentials();
   setupAuthEventListeners();
   const session = checkAuthSession();
 
@@ -167,7 +188,7 @@ function setupAuthEventListeners() {
   // Login Form Submit with Permission Checking
   const loginForm = document.getElementById('admin-login-form');
   if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const usernameInput = document.getElementById('admin-username').value.trim();
       const passwordInput = document.getElementById('admin-password').value.trim();
@@ -181,10 +202,12 @@ function setupAuthEventListeners() {
         return;
       }
 
+      const hashedPass = await sha256(passwordInput);
+
       // Check credentials strictly against authorized personnel registry
-      const matchedAccount = AUTHORIZED_PERSONNEL.find(a => 
+      const matchedAccount = authorizedPersonnel.find(a => 
         a.username.toLowerCase() === usernameInput.toLowerCase() && 
-        a.pass === passwordInput
+        a.hash === hashedPass
       );
 
       // Trigger Cyber Scanning visual

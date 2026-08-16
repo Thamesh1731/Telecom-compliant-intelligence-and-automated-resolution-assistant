@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 # Environment & Path Configuration
 # ---------------------------------------------------------------------------
 _ENV_FILE = Path(__file__).parent / ".env"
-load_dotenv(_ENV_FILE)
+load_dotenv(_ENV_FILE, override=True)
 
 _PROJECT_ROOT = Path(__file__).parent
 if str(_PROJECT_ROOT) not in sys.path:
