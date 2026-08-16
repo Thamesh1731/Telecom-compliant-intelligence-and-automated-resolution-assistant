@@ -16,7 +16,7 @@ let activeNegFeedbackId = null;
 
 // Authorized Admin Personnel Registry (Only users with permission can enter)
 const AUTHORIZED_PERSONNEL = [
-  { username: 'admin', pass: 'admin', name: 'System Administrator', role: 'Operations Director (L4)', id: '#ADM-0001' },
+  { username: 'Telecom', pass: 'Telecom@admin', name: 'System Administrator', role: 'Operations Director (L4)', id: '#ADM-0001' },
   { username: 'sarah.connor', pass: 'nexus2026', name: 'Sarah Connor', role: 'L2 Senior Resolution Agent', id: '#AGT-8824' },
   { username: 'alex.mercer', pass: 'nexus2026', name: 'Alex Mercer', role: 'L3 System Administrator', id: '#SYS-9901' },
   { username: 'elena.vance', pass: 'nexus2026', name: 'Elena Vance', role: 'Tier 3 Incident Manager', id: '#AGT-4102' },
