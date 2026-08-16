@@ -3,6 +3,283 @@ import BlurText from "../../../components/BlurText";
 import SpotLightCard from "../../../components/SpotLightCard";
 import { submitComplaintTicket, submitNegativeFeedback } from "../api/complaintServices";
 
+const getStatusStyles = (status) => {
+  switch (status) {
+    case "Open":
+      return "text-amber-400 bg-amber-950/60 border-amber-500/50 shadow-[0_0_10px_rgba(251,191,36,0.15)]";
+    case "Pending":
+    case "QUEUED":
+    case "PROCESSING":
+      return "text-cyan-400 bg-cyan-950/60 border-cyan-500/50 shadow-[0_0_10px_rgba(34,211,238,0.15)]";
+    case "Resolved":
+    default:
+      return "text-emerald-400 bg-emerald-950/60 border-emerald-500/50 shadow-[0_0_10px_rgba(52,211,153,0.15)]";
+  }
+};
+
+// Helper to parse solution blocks robustly
+const parseSolutionText = (textInput) => {
+  if (!textInput) return { problem: "", solution: "", reason: "" };
+
+  let text = typeof textInput === "string" ? textInput : JSON.stringify(textInput, null, 2);
+
+  let problem = "";
+  let solution = "";
+  let reason = "";
+
+  const probMatch = text.match(/Problem:\s*([\s\S]*?)(?=\n\nRecommended Solution:|\nRecommended Solution:|\nReason:|$)/i);
+  if (probMatch) problem = probMatch[1].trim();
+
+  const solMatch = text.match(/(?:Recommended Solution|Solution):\s*([\s\S]*?)(?=\n\nReason:|\nReason:|\nEscalation:|$)/i);
+  if (solMatch) solution = solMatch[1].trim();
+
+  const reasMatch = text.match(/Reason:\s*([\s\S]*?)(?=\n\nEscalation:|\nEscalation:|$)/i);
+  if (reasMatch) reason = reasMatch[1].trim();
+
+  if (!problem && !solution && !reason) {
+    solution = text;
+  }
+
+  return { problem, solution, reason };
+};
+
+// -----------------------------------------------------------------------
+// Wide 2-Column Dashboard Result View
+// (Defined outside ComplaintForm so typing in feedback doesn't cause remounting/focus loss)
+// -----------------------------------------------------------------------
+function ResultDashboard({
+  data,
+  formData,
+  handleReset,
+  feedbackChoice,
+  handleFeedbackChoiceYes,
+  handleFeedbackChoiceNo,
+  negativeFeedbackSubmitted,
+  negativeFeedbackText,
+  setNegativeFeedbackText,
+  negativeFeedbackError,
+  isSubmittingNegative,
+  handleNegativeFeedbackSubmit,
+  feedbackTextareaRef,
+}) {
+  const rawSolution =
+    data.solution ||
+    data.resolution ||
+    data.aiRecommendation ||
+    data.ai_solution ||
+    data.recommended_solution ||
+    data.diagnostic_resolution ||
+    (typeof data === "string" ? data : "");
+
+  const parsed = parseSolutionText(rawSolution);
+
+  const displayProblem = parsed.problem || `Customer reported technical issue regarding ${data.category || "Telecom Service"}.`;
+  const displaySolution = parsed.solution || rawSolution || `1. Verify physical power and network cable connections.\n2. Perform a standard router/modem reboot (unplug for 30 seconds).\n3. Check local service status or contact technical support.`;
+  const displayReason = parsed.reason || `Synthesized from verified knowledge base articles for ${data.category || "Service"}.`;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full items-stretch">
+      {/* Left Side: Ticket Metadata & Overview (4 cols) */}
+      <div className="md:col-span-4 bg-slate-950/80 rounded-xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
+              Ticket Metadata
+            </span>
+            <div className={`flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full border text-xs font-bold ${getStatusStyles(data.status)}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+              <span>{data.status || "RESOLVED"}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                Ticket Reference ID
+              </p>
+              <p className="font-mono text-cyan-300 text-sm font-bold tracking-wide">
+                {data.ticketId || data.complaint_id || "TCK-20260815-9821"}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-slate-900/90 rounded-lg p-2 border border-slate-800">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                  Category
+                </p>
+                <p className="text-slate-200 text-xs font-semibold truncate capitalize">
+                  {data.predictedCategory || data.category || "Internet"}
+                </p>
+              </div>
+              <div className="bg-slate-900/90 rounded-lg p-2 border border-slate-800">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                  Confidence
+                </p>
+                <p className="text-emerald-400 text-xs font-bold">
+                  {data.confidence != null ? `${(data.confidence * 100).toFixed(0)}%` : "High (94%)"}
+                </p>
+              </div>
+            </div>
+
+            {formData.email && (
+              <div className="bg-slate-900/90 rounded-lg p-2 border border-slate-800">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                  Customer Contact
+                </p>
+                <p className="text-slate-300 text-xs truncate">
+                  {formData.email}
+                </p>
+              </div>
+            )}
+
+            {(formData.city || formData.state || formData.zipCode) && (
+              <div className="bg-slate-900/90 rounded-lg p-2 border border-slate-800">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                  Location & ZIP
+                </p>
+                <p className="text-slate-300 text-xs truncate">
+                  {[formData.city, formData.state, formData.zipCode].filter(Boolean).join(", ")}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleReset}
+          className="w-full py-2.5 px-4 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-cyan-500/50 text-slate-200 hover:text-cyan-300 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2 shadow-md"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Submit Another Complaint</span>
+        </button>
+      </div>
+
+      {/* Right Side: Full AI Resolution & Actions (8 cols) */}
+      <div className="md:col-span-8 bg-slate-950/80 rounded-xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
+        {/* Header */}
+        <div className="flex items-center space-x-2 border-b border-slate-800/80 pb-2">
+          <svg className="w-4 h-4 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span className="text-xs uppercase tracking-wider font-extrabold text-cyan-400">
+            AI Diagnostic Resolution & Procedure
+          </span>
+        </div>
+
+        {/* Solution Contents */}
+        <div className="space-y-2.5 max-h-[42vh] overflow-y-auto pr-1">
+          <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-800">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">
+              Identified Problem
+            </p>
+            <p className="text-slate-200 text-xs leading-relaxed">
+              {displayProblem}
+            </p>
+          </div>
+
+          <div className="bg-slate-900/90 rounded-lg p-3 border border-cyan-500/30 shadow-[0_0_15px_rgba(0,229,255,0.05)]">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-cyan-400 mb-1">
+              Recommended Solution & Action Steps
+            </p>
+            <div className="text-slate-100 text-xs leading-relaxed whitespace-pre-wrap font-sans">
+              {displaySolution}
+            </div>
+          </div>
+
+          <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-800">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">
+              Diagnostic Justification
+            </p>
+            <p className="text-slate-300 text-xs leading-relaxed">
+              {displayReason}
+            </p>
+          </div>
+        </div>
+
+        {/* Inline Feedback Bar */}
+        <div className="rounded-lg bg-slate-900 border border-slate-800 p-2.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-300">
+              Did this solution solve your issue?
+            </span>
+            {feedbackChoice === null && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleFeedbackChoiceYes}
+                  className="py-1 px-3.5 bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 font-bold rounded-md text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFeedbackChoiceNo}
+                  className="py-1 px-3.5 bg-rose-950 hover:bg-rose-900 border border-rose-500/50 text-rose-300 font-bold rounded-md text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  No
+                </button>
+              </div>
+            )}
+          </div>
+
+          {feedbackChoice === 'yes' && (
+            <div className="p-2 rounded-md border bg-emerald-950/60 border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Thank you for your feedback! Issue status has been confirmed as resolved.
+            </div>
+          )}
+
+          {feedbackChoice === 'no' && !negativeFeedbackSubmitted && (
+            <form onSubmit={handleNegativeFeedbackSubmit} className="space-y-2 pt-1">
+              <p className="text-[11px] text-slate-400">
+                Please specify what failed so our engineering team can provide a direct resolution:
+              </p>
+              <textarea
+                ref={feedbackTextareaRef}
+                rows="2"
+                value={negativeFeedbackText}
+                onChange={(e) => setNegativeFeedbackText(e.target.value)}
+                placeholder="Describe what went wrong or additional technical details..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-md p-2 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500 text-xs transition"
+              />
+              {negativeFeedbackError && (
+                <p className="text-[11px] text-red-400">{negativeFeedbackError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={isSubmittingNegative || !negativeFeedbackText.trim()}
+                className="w-full py-1.5 px-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-slate-950 font-bold rounded-md text-xs transition cursor-pointer"
+              >
+                {isSubmittingNegative ? "Submitting..." : "Submit Technical Escalation"}
+              </button>
+            </form>
+          )}
+
+          {feedbackChoice === 'no' && negativeFeedbackSubmitted && (
+            <div className="p-2 rounded-md border bg-cyan-950/60 border-cyan-500/50 text-cyan-300 text-xs font-bold flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Feedback submitted! Ticket routed to level-3 engineering team.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ComplaintForm() {
   const [formData, setFormData] = useState({
     complaint: "",
@@ -24,20 +301,6 @@ export default function ComplaintForm() {
   const [negativeFeedbackError, setNegativeFeedbackError] = useState(null);
 
   const feedbackTextareaRef = useRef(null);
-
-  const getStatusStyles = (status) => {
-    switch (status) {
-      case "Open":
-        return "text-amber-400 bg-amber-950/60 border-amber-500/50 shadow-[0_0_10px_rgba(251,191,36,0.15)]";
-      case "Pending":
-      case "QUEUED":
-      case "PROCESSING":
-        return "text-cyan-400 bg-cyan-950/60 border-cyan-500/50 shadow-[0_0_10px_rgba(34,211,238,0.15)]";
-      case "Resolved":
-      default:
-        return "text-emerald-400 bg-emerald-950/60 border-emerald-500/50 shadow-[0_0_10px_rgba(52,211,153,0.15)]";
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +371,7 @@ export default function ComplaintForm() {
   const handleFeedbackChoiceNo = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setFeedbackChoice('no');
+    setFeedbackChoice("no");
     setTimeout(() => {
       if (feedbackTextareaRef.current) {
         feedbackTextareaRef.current.focus({ preventScroll: true });
@@ -119,264 +382,9 @@ export default function ComplaintForm() {
   const handleFeedbackChoiceYes = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setFeedbackChoice('yes');
+    setFeedbackChoice("yes");
   };
 
-  // Helper to parse solution blocks robustly
-  const parseSolutionText = (textInput) => {
-    if (!textInput) return { problem: "", solution: "", reason: "" };
-
-    let text = typeof textInput === "string" ? textInput : JSON.stringify(textInput, null, 2);
-    
-    let problem = "";
-    let solution = "";
-    let reason = "";
-
-    const probMatch = text.match(/Problem:\s*([\s\S]*?)(?=\n\nRecommended Solution:|\nRecommended Solution:|\nReason:|$)/i);
-    if (probMatch) problem = probMatch[1].trim();
-
-    const solMatch = text.match(/(?:Recommended Solution|Solution):\s*([\s\S]*?)(?=\n\nReason:|\nReason:|\nEscalation:|$)/i);
-    if (solMatch) solution = solMatch[1].trim();
-
-    const reasMatch = text.match(/Reason:\s*([\s\S]*?)(?=\n\nEscalation:|\nEscalation:|$)/i);
-    if (reasMatch) reason = reasMatch[1].trim();
-
-    if (!problem && !solution && !reason) {
-      solution = text;
-    }
-
-    return { problem, solution, reason };
-  };
-
-  // -----------------------------------------------------------------------
-  // Wide 2-Column Dashboard Result View
-  // -----------------------------------------------------------------------
-  const ResultDashboard = ({ data }) => {
-    const rawSolution = 
-      data.solution || 
-      data.resolution || 
-      data.aiRecommendation || 
-      data.ai_solution || 
-      data.recommended_solution ||
-      data.diagnostic_resolution ||
-      (typeof data === "string" ? data : "");
-
-    const parsed = parseSolutionText(rawSolution);
-
-    const displayProblem = parsed.problem || `Customer reported technical issue regarding ${data.category || "Telecom Service"}.`;
-    const displaySolution = parsed.solution || rawSolution || `1. Verify physical power and network cable connections.\n2. Perform a standard router/modem reboot (unplug for 30 seconds).\n3. Check local service status or contact technical support.`;
-    const displayReason = parsed.reason || `Synthesized from verified knowledge base articles for ${data.category || "Service"}.`;
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full items-stretch">
-        
-        {/* Left Side: Ticket Metadata & Overview (4 cols) */}
-        <div className="md:col-span-4 bg-slate-950/80 rounded-xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
-                Ticket Metadata
-              </span>
-              <div className={`flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full border text-xs font-bold ${getStatusStyles(data.status)}`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
-                <span>{data.status || "RESOLVED"}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-                  Ticket Reference ID
-                </p>
-                <p className="font-mono text-cyan-300 text-sm font-bold tracking-wide">
-                  {data.ticketId || data.complaint_id || "TCK-20260815-9821"}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-slate-900/90 rounded-lg p-2 border border-slate-800">
-                  <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-                    Category
-                  </p>
-                  <p className="text-slate-200 text-xs font-semibold truncate capitalize">
-                    {data.predictedCategory || data.category || "Internet"}
-                  </p>
-                </div>
-                <div className="bg-slate-900/90 rounded-lg p-2 border border-slate-800">
-                  <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-                    Confidence
-                  </p>
-                  <p className="text-emerald-400 text-xs font-bold">
-                    {data.confidence != null ? `${(data.confidence * 100).toFixed(0)}%` : "High (94%)"}
-                  </p>
-                </div>
-              </div>
-
-              {formData.email && (
-                <div className="bg-slate-900/90 rounded-lg p-2 border border-slate-800">
-                  <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-                    Customer Contact
-                  </p>
-                  <p className="text-slate-300 text-xs truncate">
-                    {formData.email}
-                  </p>
-                </div>
-              )}
-
-              {(formData.city || formData.state || formData.zipCode) && (
-                <div className="bg-slate-900/90 rounded-lg p-2 border border-slate-800">
-                  <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-                    Location & ZIP
-                  </p>
-                  <p className="text-slate-300 text-xs truncate">
-                    {[formData.city, formData.state, formData.zipCode].filter(Boolean).join(", ")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleReset}
-            className="w-full py-2.5 px-4 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-cyan-500/50 text-slate-200 hover:text-cyan-300 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center space-x-2 shadow-md"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Submit Another Complaint</span>
-          </button>
-        </div>
-
-        {/* Right Side: Full AI Resolution & Actions (8 cols) */}
-        <div className="md:col-span-8 bg-slate-950/80 rounded-xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
-          
-          {/* Header */}
-          <div className="flex items-center space-x-2 border-b border-slate-800/80 pb-2">
-            <svg className="w-4 h-4 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span className="text-xs uppercase tracking-wider font-extrabold text-cyan-400">
-              AI Diagnostic Resolution & Procedure
-            </span>
-          </div>
-
-          {/* Solution Contents */}
-          <div className="space-y-2.5 max-h-[42vh] overflow-y-auto pr-1">
-            <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-800">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">
-                Identified Problem
-              </p>
-              <p className="text-slate-200 text-xs leading-relaxed">
-                {displayProblem}
-              </p>
-            </div>
-
-            <div className="bg-slate-900/90 rounded-lg p-3 border border-cyan-500/30 shadow-[0_0_15px_rgba(0,229,255,0.05)]">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-cyan-400 mb-1">
-                Recommended Solution & Action Steps
-              </p>
-              <div className="text-slate-100 text-xs leading-relaxed whitespace-pre-wrap font-sans">
-                {displaySolution}
-              </div>
-            </div>
-
-            <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-800">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">
-                Diagnostic Justification
-              </p>
-              <p className="text-slate-300 text-xs leading-relaxed">
-                {displayReason}
-              </p>
-            </div>
-          </div>
-
-          {/* Inline Feedback Bar */}
-          <div className="rounded-lg bg-slate-900 border border-slate-800 p-2.5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-300">
-                Did this solution solve your issue?
-              </span>
-              {feedbackChoice === null && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleFeedbackChoiceYes}
-                    className="py-1 px-3.5 bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 font-bold rounded-md text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleFeedbackChoiceNo}
-                    className="py-1 px-3.5 bg-rose-950 hover:bg-rose-900 border border-rose-500/50 text-rose-300 font-bold rounded-md text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    No
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {feedbackChoice === 'yes' && (
-              <div className="p-2 rounded-md border bg-emerald-950/60 border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-2">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Thank you for your feedback! Issue status has been confirmed as resolved.
-              </div>
-            )}
-
-            {feedbackChoice === 'no' && !negativeFeedbackSubmitted && (
-              <form onSubmit={handleNegativeFeedbackSubmit} className="space-y-2 pt-1">
-                <p className="text-[11px] text-slate-400">
-                  Please specify what failed so our engineering team can provide a direct resolution:
-                </p>
-                <textarea
-                  ref={feedbackTextareaRef}
-                  rows="2"
-                  value={negativeFeedbackText}
-                  onChange={(e) => setNegativeFeedbackText(e.target.value)}
-                  placeholder="Describe what went wrong or additional technical details..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-md p-2 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500 text-xs transition"
-                />
-                {negativeFeedbackError && (
-                  <p className="text-[11px] text-red-400">{negativeFeedbackError}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={isSubmittingNegative || !negativeFeedbackText.trim()}
-                  className="w-full py-1.5 px-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-slate-950 font-bold rounded-md text-xs transition cursor-pointer"
-                >
-                  {isSubmittingNegative ? "Submitting..." : "Submit Technical Escalation"}
-                </button>
-              </form>
-            )}
-
-            {feedbackChoice === 'no' && negativeFeedbackSubmitted && (
-              <div className="p-2 rounded-md border bg-cyan-950/60 border-cyan-500/50 text-cyan-300 text-xs font-bold flex items-center gap-2">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Feedback submitted! Ticket routed to level-3 engineering team.
-              </div>
-            )}
-          </div>
-
-        </div>
-
-      </div>
-    );
-  };
-
-  // -----------------------------------------------------------------------
-  // Main Render - Enforcing Wide 2-Column Desktop Layout
-  // -----------------------------------------------------------------------
   return (
     <div className="h-screen w-full bg-transparent text-slate-100 flex flex-col items-center justify-center p-3 sm:p-5 font-sans overflow-hidden">
       {/* Header */}
@@ -397,7 +405,7 @@ export default function ComplaintForm() {
         />
       </div>
 
-      {/* Main Wide Card Container (max-w-5xl / 1100px wide) */}
+      {/* Main Wide Card Container */}
       <SpotLightCard
         className="w-full max-w-5xl bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-2xl p-4 sm:p-6 relative overflow-hidden !bg-slate-900 max-h-[82vh] flex flex-col justify-center"
         spotlightColor="rgba(0, 229, 255, 0.15)"
@@ -451,12 +459,27 @@ export default function ComplaintForm() {
         )}
 
         {/* Result Dashboard */}
-        {!isSubmitting && result && <ResultDashboard data={result} />}
+        {!isSubmitting && result && (
+          <ResultDashboard
+            data={result}
+            formData={formData}
+            handleReset={handleReset}
+            feedbackChoice={feedbackChoice}
+            handleFeedbackChoiceYes={handleFeedbackChoiceYes}
+            handleFeedbackChoiceNo={handleFeedbackChoiceNo}
+            negativeFeedbackSubmitted={negativeFeedbackSubmitted}
+            negativeFeedbackText={negativeFeedbackText}
+            setNegativeFeedbackText={setNegativeFeedbackText}
+            negativeFeedbackError={negativeFeedbackError}
+            isSubmittingNegative={isSubmittingNegative}
+            handleNegativeFeedbackSubmit={handleNegativeFeedbackSubmit}
+            feedbackTextareaRef={feedbackTextareaRef}
+          />
+        )}
 
         {/* Input Form (Wide 2-Column Layout) */}
         {!isSubmitting && !result && (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-            
             {/* Left: Complaint Text (7 cols) */}
             <div className="md:col-span-7 flex flex-col justify-between space-y-2">
               <label className="block text-xs uppercase tracking-wider font-bold text-slate-300">
@@ -558,7 +581,6 @@ export default function ComplaintForm() {
                 </svg>
               </button>
             </div>
-
           </form>
         )}
       </SpotLightCard>
