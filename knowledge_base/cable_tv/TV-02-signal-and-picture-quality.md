@@ -88,12 +88,11 @@ The support agent should:
 
 Escalate when:
 
-- Multiple channels consistently show poor quality.
+
 - The issue persists after equipment restart and connection checks.
 - Signal quality is abnormal.
 - A physical cable or infrastructure problem is suspected.
 - Multiple services at the same location are affected.
-- A broader service outage is suspected.
 
 ## Important Notes
 

@@ -81,7 +81,6 @@ Escalate when:
 - All channels remain unavailable after basic troubleshooting.
 - Multiple customers or locations appear affected.
 - The issue indicates a possible network or service outage.
-- Cable equipment does not reconnect.
 - The customer's service is active but channels remain unauthorized.
 - A physical line or installation issue is suspected.
 - The problem persists after standard troubleshooting.
