@@ -81,10 +81,9 @@ The support agent should:
 Escalate when:
 
 - Equipment does not power on after basic checks.
-- Equipment repeatedly restarts or fails during startup.
 - The equipment displays a persistent error.
 - Remote diagnostics identify a hardware or connection fault.
-- Physical equipment replacement is required.
+- Physical equipment replacement is required. 
 - A technician visit is required.
 - The problem persists after standard troubleshooting.
 
