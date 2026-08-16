@@ -1,8 +1,9 @@
 chromadb>=0.4.0
 sentence-transformers>=2.2.0
-numpy>=1.20.0
+numpy>=2.0.0,<3.0.0
 joblib>=1.1.0
-scikit-learn>=1.0.0
+# Matches the bundled urgency model and the project virtual environment.
+scikit-learn==1.9.0
 transformers
 torch
 groq

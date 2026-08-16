@@ -25,7 +25,8 @@ This project implements a **Hierarchical Retrieval-Augmented Generation (RAG) Re
 Follow these steps to set up and run this project on a different laptop:
 
 ### 1. Prerequisites
-Ensure you have **Python 3.10 to 3.12** installed on your system.
+Ensure you have **Python 3.13** installed. The bundled urgency model was
+serialized with scikit-learn 1.9.0 and NumPy 2.x.
 
 ### 2. Create a Virtual Environment
 Navigate to the project root directory and create a virtual environment:
