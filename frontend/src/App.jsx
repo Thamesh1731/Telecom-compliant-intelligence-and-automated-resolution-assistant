@@ -1,6 +1,6 @@
 import React from "react";
 import ComplaintForm from "./features/complaints/components/ComplaintForm";
-import { Activity, ShieldCheck, ExternalLink } from "lucide-react";
+import { Activity, ShieldCheck } from "lucide-react";
 
 export default function App() {
   return (
@@ -25,22 +25,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* Status Indicators & Admin Link */}
+        {/* Status Indicator */}
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400 px-2.5 py-1 rounded-md bg-zinc-900/60 border border-zinc-800/60">
+          <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 px-2.5 py-1 rounded-md bg-zinc-900/60 border border-zinc-800/60">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>RAG Engine Online</span>
           </div>
-
-          <a
-            href="/admin"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs font-medium text-zinc-300 hover:text-zinc-100 px-3 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 transition-colors duration-150"
-          >
-            <span>Escalation Console</span>
-            <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
-          </a>
         </div>
       </header>
 
