@@ -24,6 +24,10 @@ dist/
 chroma_db/
 chroma_data/
 
+# Databases
+*.db
+*.sqlite3
+
 # OS
 .DS_Store
 Thumbs.db
