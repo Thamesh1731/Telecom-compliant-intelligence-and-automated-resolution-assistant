@@ -26,6 +26,14 @@ DOC_INTENT_WEIGHT = 0.15
 DOC_CATEGORY_WEIGHT = 0.15
 AMBIGUITY_THRESHOLD = 0.05
 
+# Chunk Scoring Weights (Level 2 & 3)
+TEXT_WEIGHT = 0.40
+SUBCATEGORY_WEIGHT = 0.15
+INTENT_WEIGHT = 0.15
+CATEGORY_WEIGHT = 0.15
+SECTION_WEIGHT = 0.15
+
+
 # ============================================================
 # LOAD MODELS
 # ============================================================
@@ -348,6 +356,311 @@ def vector_search(
     )
 
     return results, query_embedding
+
+
+# ============================================================
+# SECTION USEFULNESS SCORER
+# ============================================================
+
+def get_section_usefulness(section_name):
+    """
+    Returns a section usefulness score between 0.0 and 1.0 based on keyword matching.
+    """
+    name = section_name.strip().lower()
+
+    if "source basis" in name or "scalability requirements" in name:
+        return 0.0
+
+    # High priority keywords
+    high_keywords = [
+        "troubleshooting procedure", "resolution", "recommended action",
+        "human agent action", "escalation conditions", "escalation",
+        "human action", "recommended human action", "how to resolve",
+        "actionable", "step-by-step"
+    ]
+    for kw in high_keywords:
+        if kw in name:
+            return 1.0
+
+    # Medium-high priority keywords
+    med_high_keywords = [
+        "possible causes", "diagnostic steps", "eligibility",
+        "requirements", "service conditions", "initial diagnosis",
+        "diagnosis guidance", "diagnostic interpretation", "possible cause",
+        "diagnosis"
+    ]
+    for kw in med_high_keywords:
+        if kw in name:
+            return 0.7
+
+    # Low priority keywords
+    low_keywords = [
+        "example", "sample", "complaint example", "destination-specific failure",
+        "location-specific issue", "large-scale workflow"
+    ]
+    for kw in low_keywords:
+        if kw in name:
+            return 0.1
+
+    # Medium priority keywords
+    med_keywords = [
+        "common symptoms", "symptoms", "problem", "overview", "important notes", "notes"
+    ]
+    for kw in med_keywords:
+        if kw in name:
+            return 0.4
+
+    # Default for other content sections
+    return 0.5
+
+
+# ============================================================
+# RERANK RESULTS
+# ============================================================
+
+def rerank_results(
+    query,
+    query_embedding,
+    results,
+    detected_intent=None,
+    kb_category_probs=None
+):
+
+    if not results["documents"]:
+        return []
+
+    documents = results["documents"][0]
+    metadatas = results["metadatas"][0]
+    distances = results["distances"][0]
+
+    reranked = []
+
+    target_subcategory = (
+        INTENT_SUBCATEGORY_MAP.get(
+            detected_intent
+        )
+    )
+
+    if kb_category_probs is None:
+        kb_category_probs = {}
+
+    for document, metadata, distance in zip(
+        documents,
+        metadatas,
+        distances
+    ):
+
+        subcategory = metadata.get(
+            "subcategory",
+            ""
+        )
+
+        # ----------------------------------------------------
+        # Semantic text similarity
+        # ----------------------------------------------------
+
+        text_similarity = 1 / (
+            1 + distance
+        )
+
+        # ----------------------------------------------------
+        # Subcategory similarity
+        # ----------------------------------------------------
+
+        subcategory_embedding = (
+            embedding_model.encode(
+                subcategory
+            ).tolist()
+        )
+
+        subcategory_similarity = (
+            cosine_similarity(
+                query_embedding,
+                subcategory_embedding
+            )
+        )
+
+        # ----------------------------------------------------
+        # Explicit intent match
+        # ----------------------------------------------------
+
+        intent_score = 0
+
+        if target_subcategory:
+
+            if (
+                subcategory.lower()
+                ==
+                target_subcategory.lower()
+            ):
+
+                intent_score = 1.0
+
+            elif (
+                target_subcategory.lower()
+                in
+                subcategory.lower()
+            ):
+
+                intent_score = 0.75
+
+        # ----------------------------------------------------
+        # Category compatibility
+        # ----------------------------------------------------
+
+        chunk_category = metadata.get("category", "")
+        category_compatibility = kb_category_probs.get(chunk_category, 0.0)
+
+        # ----------------------------------------------------
+        # Section usefulness
+        # ----------------------------------------------------
+
+        section_name = metadata.get("section_name", "Overview")
+        section_usefulness = get_section_usefulness(section_name)
+
+        # ----------------------------------------------------
+        # Final score
+        # ----------------------------------------------------
+
+        final_score = (
+
+            TEXT_WEIGHT
+            *
+            text_similarity
+
+            +
+
+            SUBCATEGORY_WEIGHT
+            *
+            subcategory_similarity
+
+            +
+
+            INTENT_WEIGHT
+            *
+            intent_score
+
+            +
+
+            CATEGORY_WEIGHT
+            *
+            category_compatibility
+
+            +
+
+            SECTION_WEIGHT
+            *
+            section_usefulness
+        )
+
+        reranked.append({
+
+            "text": document,
+
+            "metadata": metadata,
+
+            "distance": distance,
+
+            "text_similarity":
+                text_similarity,
+
+            "subcategory_similarity":
+                subcategory_similarity,
+
+            "intent_score":
+                intent_score,
+
+            "category_compatibility":
+                category_compatibility,
+
+            "section_usefulness":
+                section_usefulness,
+
+            "final_score":
+                final_score
+        })
+
+
+    reranked.sort(
+        key=lambda x: x["final_score"],
+        reverse=True
+    )
+
+    return reranked
+
+
+# ============================================================
+# REMOVE DUPLICATE DOCUMENTS
+# ============================================================
+
+def remove_duplicate_documents(results, top_k=TOP_K):
+    """
+    Selects top_k diverse chunks using a greedy penalty-based diversification algorithm (MMR-style).
+    Avoids returning multiple chunks from the same document of the same section, and promotes document diversity.
+    """
+    if not results:
+        return []
+
+    candidates = list(results)
+    selected = []
+    
+    selected_docs_count = {}
+    selected_sections_by_doc = {}
+
+    while len(selected) < top_k and candidates:
+        best_candidate = None
+        best_adjusted_score = -999999.0
+        best_candidate_idx = -1
+
+        for i, candidate in enumerate(candidates):
+            doc_id = candidate["metadata"].get("document_id", "unknown")
+            section_name = candidate["metadata"].get("section_name", "Overview")
+
+            # Base score
+            score = candidate["final_score"]
+
+            # Penalties
+            penalty = 0.0
+
+            # 1. Document repetition penalty (encourages document diversity)
+            doc_count = selected_docs_count.get(doc_id, 0)
+            if doc_count > 0:
+                penalty += 0.08 * doc_count  # small penalty per existing chunk
+
+            # 2. Section repetition penalty (prevents duplicate sections in same document)
+            doc_sections = selected_sections_by_doc.get(doc_id, set())
+            if section_name in doc_sections:
+                penalty += 0.25  # high penalty for identical section
+
+            adjusted_score = score - penalty
+
+            if adjusted_score > best_adjusted_score:
+                best_adjusted_score = adjusted_score
+                best_candidate = candidate
+                best_candidate_idx = i
+
+        if best_candidate is not None:
+            doc_id = best_candidate["metadata"].get("document_id", "unknown")
+            section_name = best_candidate["metadata"].get("section_name", "Overview")
+
+            # Update selected state
+            selected.append(best_candidate)
+            selected_docs_count[doc_id] = selected_docs_count.get(doc_id, 0) + 1
+            if doc_id not in selected_sections_by_doc:
+                selected_sections_by_doc[doc_id] = set()
+            selected_sections_by_doc[doc_id].add(section_name)
+
+            # Print logging explanation for chunk selection
+            base_score = round(best_candidate["final_score"], 4)
+            adj_score = round(best_adjusted_score, 4)
+            print(f"Selected Chunk: {doc_id} | {section_name:<25} (Base Score: {base_score}, Adjusted Score: {adj_score})")
+
+            # Remove from candidate pool
+            candidates.pop(best_candidate_idx)
+        else:
+            break
+
+    return selected
 
 
 # ============================================================
