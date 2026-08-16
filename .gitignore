@@ -24,9 +24,18 @@ dist/
 chroma_db/
 chroma_data/
 
+# Large ML model files (>100MB — exceeds GitHub file size limit)
+priority1/severity_outputs/severity_transformer/
+*.safetensors
+*.bin
+
 # Databases
 *.db
 *.sqlite3
+
+# Runtime feedback state (customer-specific records)
+resolver_base/pending/*.json
+resolver_base/resolved/*.json
 
 # OS
 .DS_Store
