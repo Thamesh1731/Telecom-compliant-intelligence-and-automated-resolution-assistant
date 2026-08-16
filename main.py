@@ -137,6 +137,10 @@ class SimpleQueryRequest(BaseModel):
     complaint: str
 
 
+class SimpleQueryRequest(BaseModel):
+    complaint: str
+
+
 # ---------------------------------------------------------------------------
 # Escalation Detection Helper
 # ---------------------------------------------------------------------------
