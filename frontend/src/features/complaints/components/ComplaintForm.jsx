@@ -434,7 +434,6 @@ export default function ComplaintForm() {
     setFeedbackChoice("yes");
   };
 
-<<<<<<< HEAD
   // Helper to parse solution blocks robustly
   const parseSolutionText = (textInput) => {
     if (!textInput) return { problem: "", solution: "", reason: "" };
@@ -475,10 +474,14 @@ export default function ComplaintForm() {
       (typeof data === "string" ? data : "");
 
     const parsed = parseSolutionText(rawSolution);
+    const isEscalated = Boolean(data.escalationRequired);
 
     const displayProblem = parsed.problem || `Customer reported technical issue regarding ${data.category || "Telecom Service"}.`;
-    const displaySolution = parsed.solution || rawSolution || `1. Verify physical power and network cable connections.\n2. Perform a standard router/modem reboot (unplug for 30 seconds).\n3. Check local service status or contact technical support.`;
+    const displaySolution = isEscalated
+      ? "The technician will contact you soon."
+      : parsed.solution || rawSolution || `1. Verify physical power and network cable connections.\n2. Perform a standard router/modem reboot (unplug for 30 seconds).\n3. Check local service status or contact technical support.`;
     const displayReason = parsed.reason || `Synthesized from verified knowledge base articles for ${data.category || "Service"}.`;
+    const statusBadge = getStatusBadge(data.status);
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full items-stretch">
@@ -490,9 +493,9 @@ export default function ComplaintForm() {
               <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
                 Ticket Metadata
               </span>
-              <div className={`flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full border text-xs font-bold ${getStatusStyles(data.status)}`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
-                <span>{data.status || "RESOLVED"}</span>
+              <div className={`flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full border text-xs font-bold ${statusBadge.bg}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot} animate-pulse`}></span>
+                <span>{statusBadge.label}</span>
               </div>
             </div>
 
@@ -604,7 +607,15 @@ export default function ComplaintForm() {
             </div>
           </div>
 
-          {/* Inline Feedback Bar */}
+          {isEscalated ? (
+            <div className="rounded-lg bg-amber-950/40 border border-amber-500/40 p-3 text-amber-200 text-xs font-bold flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v4m0 4h.01M10.3 3.7l-7.6 13.2A2 2 0 004.4 20h15.2a2 2 0 001.7-3.1L13.7 3.7a2 2 0 00-3.4 0z" />
+              </svg>
+              The technician will contact you soon.
+            </div>
+          ) : (
+          /* Inline Feedback Bar */
           <div className="rounded-lg bg-slate-900 border border-slate-800 p-2.5 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-300">
@@ -680,6 +691,7 @@ export default function ComplaintForm() {
               </div>
             )}
           </div>
+          )}
 
         </div>
 
@@ -690,8 +702,6 @@ export default function ComplaintForm() {
   // -----------------------------------------------------------------------
   // Main Render - Enforcing Wide 2-Column Desktop Layout
   // -----------------------------------------------------------------------
-=======
->>>>>>> main
   return (
     <div className="w-full max-w-5xl flex flex-col items-center">
       {/* Title & Scope Header */}
@@ -750,27 +760,7 @@ export default function ComplaintForm() {
         )}
 
         {/* Result Dashboard */}
-<<<<<<< HEAD
         {!isSubmitting && result && renderResultDashboard(result)}
-=======
-        {!isSubmitting && result && (
-          <ResultDashboard
-            data={result}
-            formData={formData}
-            handleReset={handleReset}
-            feedbackChoice={feedbackChoice}
-            handleFeedbackChoiceYes={handleFeedbackChoiceYes}
-            handleFeedbackChoiceNo={handleFeedbackChoiceNo}
-            negativeFeedbackSubmitted={negativeFeedbackSubmitted}
-            negativeFeedbackText={negativeFeedbackText}
-            setNegativeFeedbackText={setNegativeFeedbackText}
-            negativeFeedbackError={negativeFeedbackError}
-            isSubmittingNegative={isSubmittingNegative}
-            handleNegativeFeedbackSubmit={handleNegativeFeedbackSubmit}
-            feedbackTextareaRef={feedbackTextareaRef}
-          />
-        )}
->>>>>>> main
 
         {/* Intake Form (2-Column Desktop Grid) */}
         {!isSubmitting && !result && (

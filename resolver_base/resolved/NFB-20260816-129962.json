@@ -1,0 +1,16 @@
+{
+  "feedback_id": "NFB-20260816-129962",
+  "complaint_id": "21c7c429-b7b0-4843-ae9d-63d9416d4b28",
+  "category": "internet",
+  "subcategory": "General",
+  "complaint": "My wifi router is overheating",
+  "ai_solution": "Problem:\nThe customer's wifi router is overheating.\n\nRecommended Solution:\n1. Place the wifi router in a well-ventilated area to prevent overheating.\n\nReason:\nThis solution is recommended as it directly addresses the issue of overheating, which is explicitly stated in the technician-approved resolution.\n\nEscalation:\nNo\n\nEscalation Reason:\nNot required\n\nConfidence:\nHigh",
+  "feedback": "not solved",
+  "email": "thameshcsevec@gmail.com",
+  "status": "resolved",
+  "submitted_at": "2026-08-16T07:06:16.065058+00:00",
+  "resolved_solution": "1. Place the wifi router in a well-ventilated area to prevent overheating.",
+  "resolved_at": "2026-08-16T07:06:24.875434+00:00",
+  "email_status": "sent",
+  "email_sent_at": "2026-08-16T07:06:31.360054+00:00"
+}
