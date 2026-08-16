@@ -44,6 +44,7 @@ from model_server import (
 )
 from resolver_retriever import store_resolver_solution, resolver_solution_count
 from email_service import send_resolution_email
+from request_queue import ComplaintRequestQueue, classify_request
 
 # ---------------------------------------------------------------------------
 # Global State
@@ -51,6 +52,22 @@ from email_service import send_resolution_email
 ESCALATED_TICKETS: List[Dict[str, Any]] = []
 NEGATIVE_FEEDBACK_ITEMS: List[Dict[str, Any]] = []
 RESOLUTION_LOCK = threading.Lock()
+
+
+def _process_queued_complaint(job: Dict[str, Any]) -> None:
+    """Run the resolver pipeline for one priority-selected complaint."""
+    try:
+        job["result"] = handle_new_complaint(
+            job["complaint"],
+            predicted_category=job.get("predicted_category"),
+        )
+    except Exception as exc:
+        job["error"] = exc
+    finally:
+        job["done"].set()
+
+
+COMPLAINT_QUEUE = ComplaintRequestQueue(_process_queued_complaint)
 
 # Resolver Base paths
 RESOLVER_BASE = _PROJECT_ROOT / "resolver_base"
@@ -84,7 +101,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        origin.strip()
+        for origin in os.getenv("ALLOWED_ORIGINS", "*").split(",")
+        if origin.strip()
+    ],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -128,8 +149,9 @@ class ResolveFeedbackRequest(BaseModel):
     resolved_solution: str
 
 
-class SimpleQueryRequest(BaseModel):
-    complaint: str
+class ResolveTicketRequest(BaseModel):
+    ticket_id: str
+    resolved_solution: str
 
 
 class SimpleQueryRequest(BaseModel):
@@ -203,7 +225,21 @@ async def process_complaint(request: ComplaintRequest):
     """
     complaint_text = request.complaint.strip()
 
-    res = handle_new_complaint(complaint_text)
+    priority_result = classify_request(complaint_text)
+    queued_job = {
+        "complaint": complaint_text,
+        "predicted_category": None,
+        "queue": priority_result["queue"],
+        "done": threading.Event(),
+    }
+    COMPLAINT_QUEUE.submit(queued_job)
+    if not queued_job["done"].wait(timeout=float(os.getenv("QUEUE_REQUEST_TIMEOUT", "300"))):
+        raise HTTPException(status_code=504, detail="Complaint is still queued. Please retry shortly.")
+    if queued_job.get("error"):
+        raise HTTPException(status_code=500, detail="Complaint processing failed.")
+    res = queued_job.get("result")
+    if not res:
+        raise HTTPException(status_code=500, detail="Complaint processing returned no result.")
     if not res or not res.get("found"):
         raise HTTPException(status_code=404, detail="No matching knowledge found for this complaint.")
 
@@ -225,6 +261,7 @@ async def process_complaint(request: ComplaintRequest):
         "accountId": f"#ACC-{str(uuid.uuid4().int)[:5]}",
         "tier": "Residential / Business",
         "location": f"{request.city or 'Unknown'} - {request.state or 'Sector'}",
+        "customerEmail": request.email.strip(),
         "category": category,
         "issueSummary": complaint_text[:60] + "..." if len(complaint_text) > 60 else complaint_text,
         "priority": "HIGH" if escalation_required else "MEDIUM",
@@ -261,6 +298,8 @@ async def process_complaint(request: ComplaintRequest):
         "escalationReason": escalation_reason,
         "matches": res.get("matches", []),
         "status": ticket_data["status"],
+        "priority": priority_result.get("priority"),
+        "urgency": priority_result.get("urgency"),
     }
 
 
@@ -443,4 +482,4 @@ if admin_dir.exists():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))

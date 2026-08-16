@@ -1,0 +1,16 @@
+{
+  "feedback_id": "NFB-20260815-321584",
+  "complaint_id": "dc0317a6-7527-4db5-8aee-ae048e32b678",
+  "category": "roaming",
+  "subcategory": "Roaming Voice Calls and SMS",
+  "complaint": "i'm not able to receive incoming calls while roaming",
+  "ai_solution": "Problem:\nThe customer is unable to receive incoming calls while roaming.\n\nRecommended Solution:\n1. Verify roaming eligibility through authorized provider systems to ensure that the account supports roaming in the destination country.\n2. Check if voice roaming is enabled on the account.\n3. Restart the device and allow it to reconnect to the roaming network.\n4. Check if the device detects a roaming network and displays a network name.\n5. Verify that the SIM/eSIM is active and correctly provisioned.\n\nReason:\nThe customer's issue may be due to a lack of roaming eligibility, voice roaming not being enabled, or a device issue. By following these steps, we can troubleshoot the problem and identify the root cause.\n\nEscalation:\nNo\n\nEscalation Reason:\nNot required.\n\nConfidence:\nMedium\n\nNote: The confidence level is medium because the customer's issue is specific to incoming calls while roaming, and the retrieved knowledge provides possible causes and troubleshooting steps. However, the exact cause of the issue may require further investigation and verification.",
+  "feedback": "my issue is not solved yet?",
+  "email": "thameshcsevec@gmail.com",
+  "status": "resolved",
+  "submitted_at": "2026-08-15T15:02:12.313086+00:00",
+  "resolved_solution": "Change your mobile device",
+  "resolved_at": "2026-08-15T15:02:51.246380+00:00",
+  "email_status": "sent",
+  "email_sent_at": "2026-08-15T15:02:56.545519+00:00"
+}

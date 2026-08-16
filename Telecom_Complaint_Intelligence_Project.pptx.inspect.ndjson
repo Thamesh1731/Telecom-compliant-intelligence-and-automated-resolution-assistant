@@ -1,0 +1,200 @@
+{"kind":"deck","id":"pr/q6l4pt","name":"Deck"}
+{"kind":"layout","layoutId":"f24cd92b-8cf3-4ef7-85c9-391587a2f12a","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"138fc4ec-caa1-4ea6-b86d-25a480493be0","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/va1rw1","slide":1,"title":"TELECOM COMPLAINT INTELLIGENCE","textShapes":5}
+{"kind":"shape","id":"sh/4b25w3q5","slide":1,"name":"cover-accent","bbox":[48,64,12,588]}
+{"kind":"textbox","id":"sh/3at43y9k","slide":1,"name":"cover-eyebrow","text":"TELECOM COMPLAINT INTELLIGENCE","textPreview":"TELECOM COMPLAINT INTELLIGENCE","textChars":30,"textLines":1,"bbox":[92,78,520,28]}
+{"kind":"textbox","id":"sh/i9knud8z","slide":1,"name":"cover-title","text":"Automated Resolution\nwith Human Escalation","textPreview":"Automated Resolution | with Human Escalation","textChars":42,"textLines":2,"bbox":[92,150,700,170]}
+{"kind":"textbox","id":"sh/dgv69srm","slide":1,"name":"cover-subtitle","text":"Priority-aware request handling • Resolver Base • Hierarchical RAG • Technician email workflow","textPreview":"Priority-aware request handling • Resolver Base • Hierarchical RAG • Technician email workflow","textChars":94,"textLines":1,"bbox":[96,350,720,64]}
+{"kind":"shape","id":"sh/sfm50nq1","slide":1,"name":"cover-flow","bbox":[92,492,1070,92]}
+{"kind":"textbox","id":"sh/redo7i9g","slide":1,"name":"cover-flow-text","text":"Complaint  →  Priority Queue  →  Resolver Base / Knowledge Base  →  LLM  →  Feedback or Escalation","textPreview":"Complaint  →  Priority Queue  →  Resolver Base / Knowledge Base  →  LLM  →  Feedback or Escalation","textChars":98,"textLines":1,"bbox":[124,520,1000,36]}
+{"kind":"textbox","id":"sh/qd4nyd8b","slide":1,"name":"cover-footer","text":"Project workflow presentation","textPreview":"Project workflow presentation","textChars":29,"textLines":1,"bbox":[92,650,360,24]}
+{"kind":"notes","id":"nt/va1rw1","slide":1,"text":""}
+{"kind":"slide","id":"sl/cuhzbl","slide":2,"title":"01 / SYSTEM PURPOSE","textShapes":8}
+{"kind":"textbox","id":"sh/u1gfyhoz","slide":2,"name":"section-2","text":"01 / SYSTEM PURPOSE","textPreview":"01 / SYSTEM PURPOSE","textChars":19,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/h47y9w7a","slide":2,"name":"title-2","text":"The system separates routine resolution from human exceptions","textPreview":"The system separates routine resolution from human exceptions","textChars":61,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/g3yx0r65","slide":2,"name":"rule-2","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/7y5g3mp8","slide":2,"name":"footer-2","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"textbox","id":"sh/6xwfuhon","slide":2,"name":"purpose","text":"The platform is designed to resolve common telecom complaints quickly while giving technicians a clear, auditable path for cases that need human attention.","textPreview":"The platform is designed to resolve common telecom complaints quickly while giving technicians a clear, auditable path for cases that nee...","textChars":155,"textLines":1,"bbox":[48,170,1120,68]}
+{"kind":"shape","id":"sh/t07y5c7e","slide":2,"name":"routine","bbox":[48,290,520,250]}
+{"kind":"textbox","id":"sh/szyxw76t","slide":2,"name":"routine-head","text":"Routine path","textPreview":"Routine path","textChars":12,"textLines":1,"bbox":[82,322,400,34]}
+{"kind":"textbox","id":"sh/ju5wz2pc","slide":2,"name":"routine-body","text":"• Classify urgency\n• Retrieve approved guidance\n• Generate a structured response\n• Ask for Yes / No feedback","textPreview":"• Classify urgency | • Retrieve approved guidance | • Generate a structured response | • Ask for Yes / No feedback","textChars":108,"textLines":4,"bbox":[82,378,430,120]}
+{"kind":"shape","id":"sh/i9wfqxor","slide":2,"name":"exception","bbox":[680,290,552,250]}
+{"kind":"textbox","id":"sh/wrq18vy9","slide":2,"name":"exception-head","text":"Human exception path","textPreview":"Human exception path","textChars":20,"textLines":1,"bbox":[714,322,450,34]}
+{"kind":"textbox","id":"sh/xszi10fu","slide":2,"name":"exception-body","text":"• Escalate when policy requires it\n• Capture complaint and escalation reason\n• Technician writes a support message\n• Send the customer an email update","textPreview":"• Escalate when policy requires it | • Capture complaint and escalation reason | • Technician writes a support message | • Send the custo...","textChars":150,"textLines":4,"bbox":[714,378,460,130]}
+{"kind":"notes","id":"nt/cuhzbl","slide":2,"text":""}
+{"kind":"slide","id":"sl/2sr3wh","slide":3,"title":"02 / ARCHITECTURE","textShapes":21}
+{"kind":"textbox","id":"sh/faxkrqh8","slide":3,"name":"section-3","text":"02 / ARCHITECTURE","textPreview":"02 / ARCHITECTURE","textChars":17,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/gb6l0vyt","slide":3,"name":"title-3","text":"One request path connects the customer, models, and technicians","textPreview":"One request path connects the customer, models, and technicians","textChars":63,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/hcfmt0fe","slide":3,"name":"rule-3","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/6543ulgr","slide":3,"name":"footer-3","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"textbox","id":"sh/76dknqhc","slide":3,"name":"arch-arrow-0","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[204,310,54,34]}
+{"kind":"textbox","id":"sh/s7mlwvyh","slide":3,"name":"arch-arrow-1","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[410,310,54,34]}
+{"kind":"textbox","id":"sh/t8v2pgz2","slide":3,"name":"arch-arrow-2","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[616,310,54,34]}
+{"kind":"textbox","id":"sh/ihk3q1gf","slide":3,"name":"arch-arrow-3","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[822,310,54,34]}
+{"kind":"textbox","id":"sh/jidkj6h0","slide":3,"name":"arch-arrow-4","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[1028,310,54,34]}
+{"kind":"shape","id":"sh/zyhknupk","slide":3,"name":"arch-Customer","bbox":[54,270,150,120]}
+{"kind":"textbox","id":"sh/yx83upoz","slide":3,"name":"arch-title-Customer","text":"Customer","textPreview":"Customer","textChars":8,"textLines":1,"bbox":[68,288,122,28]}
+{"kind":"textbox","id":"sh/lkjmp47q","slide":3,"name":"arch-body-Customer","text":"Complaint\n+ email","textPreview":"Complaint | + email","textChars":17,"textLines":2,"bbox":[66,328,126,48]}
+{"kind":"shape","id":"sh/kjalwz65","slide":3,"name":"arch-FastAPI","bbox":[260,270,150,120]}
+{"kind":"textbox","id":"sh/7m14repw","slide":3,"name":"arch-title-FastAPI","text":"FastAPI","textPreview":"FastAPI","textChars":7,"textLines":1,"bbox":[274,288,122,28]}
+{"kind":"textbox","id":"sh/mls3y9ob","slide":3,"name":"arch-body-FastAPI","text":"Validate\nrequest","textPreview":"Validate | request","textChars":16,"textLines":2,"bbox":[272,328,126,48]}
+{"kind":"shape","id":"sh/9ojmt47m","slide":3,"name":"arch-Priority Engine","bbox":[466,270,150,120]}
+{"kind":"textbox","id":"sh/8nal0z61","slide":3,"name":"arch-title-Priority Engine","text":"Priority Engine","textPreview":"Priority Engine","textChars":15,"textLines":1,"bbox":[480,288,122,28]}
+{"kind":"textbox","id":"sh/nqxkfapc","slide":3,"name":"arch-body-Priority Engine","text":"Critical → Low","textPreview":"Critical → Low","textChars":14,"textLines":1,"bbox":[478,328,126,48]}
+{"kind":"shape","id":"sh/2po3m5or","slide":3,"name":"arch-RAG Layer","bbox":[672,270,150,120]}
+{"kind":"textbox","id":"sh/qlwnud8f","slide":3,"name":"arch-title-RAG Layer","text":"RAG Layer","textPreview":"RAG Layer","textChars":9,"textLines":1,"bbox":[686,288,122,28]}
+{"kind":"textbox","id":"sh/rm5oni90","slide":3,"name":"arch-body-RAG Layer","text":"Resolver Base\nthen KB","textPreview":"Resolver Base | then KB","textChars":21,"textLines":2,"bbox":[684,328,126,48]}
+{"kind":"shape","id":"sh/snepwnql","slide":3,"name":"arch-LLM","bbox":[878,270,150,120]}
+{"kind":"textbox","id":"sh/don6psr6","slide":3,"name":"arch-title-LLM","text":"LLM","textPreview":"LLM","textChars":3,"textLines":1,"bbox":[892,288,122,28]}
+{"kind":"textbox","id":"sh/ihcnqd8j","slide":3,"name":"arch-body-LLM","text":"Structure\nresponse","textPreview":"Structure | response","textChars":18,"textLines":2,"bbox":[890,328,126,48]}
+{"kind":"shape","id":"sh/3i5ojy94","slide":3,"name":"arch-Admin / Email","bbox":[1084,270,150,120]}
+{"kind":"textbox","id":"sh/4je5s3q9","slide":3,"name":"arch-title-Admin / Email","text":"Admin / Email","textPreview":"Admin / Email","textChars":13,"textLines":1,"bbox":[1098,288,122,28]}
+{"kind":"textbox","id":"sh/5kn6l8ru","slide":3,"name":"arch-body-Admin / Email","text":"Feedback\nescalation","textPreview":"Feedback | escalation","textChars":19,"textLines":2,"bbox":[1096,328,126,48]}
+{"kind":"textbox","id":"sh/udcnmt87","slide":3,"name":"arch-note","text":"The response remains asynchronous after intake: the API returns a complaint ID while the queue worker performs retrieval and generation.","textPreview":"The response remains asynchronous after intake: the API returns a complaint ID while the queue worker performs retrieval and generation.","textChars":136,"textLines":1,"bbox":[128,510,1024,56]}
+{"kind":"notes","id":"nt/2sr3wh","slide":3,"text":""}
+{"kind":"slide","id":"sl/5ew1r4","slide":4,"title":"03 / REQUEST HANDLING","textShapes":17}
+{"kind":"textbox","id":"sh/uh8zi50z","slide":4,"name":"section-4","text":"03 / REQUEST HANDLING","textPreview":"03 / REQUEST HANDLING","textChars":21,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/hkzitkzq","slide":4,"name":"title-4","text":"Every complaint is classified before it reaches the resolution pipeline","textPreview":"Every complaint is classified before it reaches the resolution pipeline","textChars":71,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/gjqhkfi5","slide":4,"name":"rule-4","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/3mh0vuhw","slide":4,"name":"footer-4","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"textbox","id":"sh/2l8zmp0b","slide":4,"name":"intake-copy","text":"The priority model produces an urgency level and priority label. The scheduler then places the request into one of four ordered queues.","textPreview":"The priority model produces an urgency level and priority label. The scheduler then places the request into one of four ordered queues.","textChars":135,"textLines":1,"bbox":[48,164,1120,54]}
+{"kind":"shape","id":"sh/p8jix4zm","slide":4,"name":"priority-0","bbox":[72,290,236,190]}
+{"kind":"textbox","id":"sh/4nqhozi1","slide":4,"name":"priority-label-0","text":"P1","textPreview":"P1","textChars":2,"textLines":1,"bbox":[92,312,58,40]}
+{"kind":"textbox","id":"sh/jqxgjq1c","slide":4,"name":"priority-name-0","text":"Critical","textPreview":"Critical","textChars":8,"textLines":1,"bbox":[92,365,190,34]}
+{"kind":"textbox","id":"sh/ipozal0r","slide":4,"name":"priority-desc-0","text":"Immediate attention","textPreview":"Immediate attention","textChars":19,"textLines":1,"bbox":[92,414,190,38]}
+{"kind":"shape","id":"sh/o7mhgvy5","slide":4,"name":"priority-1","bbox":[364,290,236,190]}
+{"kind":"textbox","id":"sh/p8vi90za","slide":4,"name":"priority-label-1","text":"P2","textPreview":"P2","textChars":2,"textLines":1,"bbox":[384,312,58,40]}
+{"kind":"textbox","id":"sh/254ze5gz","slide":4,"name":"priority-name-1","text":"High","textPreview":"High","textChars":4,"textLines":1,"bbox":[384,365,190,34]}
+{"kind":"textbox","id":"sh/n6d07qhk","slide":4,"name":"priority-desc-1","text":"Urgent service impact","textPreview":"Urgent service impact","textChars":21,"textLines":1,"bbox":[384,414,190,38]}
+{"kind":"shape","id":"sh/cbmhkfy1","slide":4,"name":"priority-2","bbox":[656,290,236,190]}
+{"kind":"textbox","id":"sh/xcfidkzm","slide":4,"name":"priority-label-2","text":"P3","textPreview":"P3","textChars":2,"textLines":1,"bbox":[676,312,58,40]}
+{"kind":"textbox","id":"sh/a94zi5gv","slide":4,"name":"priority-name-2","text":"Medium","textPreview":"Medium","textChars":6,"textLines":1,"bbox":[676,365,190,34]}
+{"kind":"textbox","id":"sh/bad0bahg","slide":4,"name":"priority-desc-2","text":"Standard complaint","textPreview":"Standard complaint","textChars":18,"textLines":1,"bbox":[676,414,190,38]}
+{"kind":"shape","id":"sh/sf2h8byx","slide":4,"name":"priority-3","bbox":[948,290,236,190]}
+{"kind":"textbox","id":"sh/dgby1gzi","slide":4,"name":"priority-label-3","text":"P4","textPreview":"P4","textChars":2,"textLines":1,"bbox":[968,312,58,40]}
+{"kind":"textbox","id":"sh/tw3e5cr6","slide":4,"name":"priority-name-3","text":"Low","textPreview":"Low","textChars":3,"textLines":1,"bbox":[968,365,190,34]}
+{"kind":"textbox","id":"sh/svuxc7ql","slide":4,"name":"priority-desc-3","text":"Non-urgent request","textPreview":"Non-urgent request","textChars":18,"textLines":1,"bbox":[968,414,190,38]}
+{"kind":"textbox","id":"sh/7alw3290","slide":4,"name":"priority-result","text":"Output: urgency + priority + queue assignment","textPreview":"Output: urgency + priority + queue assignment","textChars":45,"textLines":1,"bbox":[280,550,720,34]}
+{"kind":"notes","id":"nt/5ew1r4","slide":4,"text":""}
+{"kind":"slide","id":"sl/8kuryd","slide":5,"title":"04 / QUEUE ALGORITHM","textShapes":20}
+{"kind":"textbox","id":"sh/n21o7e1w","slide":5,"name":"section-5","text":"04 / QUEUE ALGORITHM","textPreview":"04 / QUEUE ALGORITHM","textChars":20,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/o3apgjih","slide":5,"name":"title-5","text":"The scheduler uses all available capacity, then carries unused slots downward","textPreview":"The scheduler uses all available capacity, then carries unused slots downward","textChars":77,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/p4j694j2","slide":5,"name":"rule-5","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/a5s7i90n","slide":5,"name":"footer-5","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"textbox","id":"sh/b6l8be18","slide":5,"name":"queue-copy","text":"Configured allocation per processing cycle","textPreview":"Configured allocation per processing cycle","textChars":42,"textLines":1,"bbox":[48,165,600,30]}
+{"kind":"shape","id":"sh/c7upkjit","slide":5,"name":"capacity-Critical","bbox":[70,248,452,72]}
+{"kind":"textbox","id":"sh/x83qdojy","slide":5,"name":"capacity-text-Critical","text":"Critical\n40%","textPreview":"Critical | 40%","textChars":12,"textLines":2,"bbox":[70,261,452,46]}
+{"kind":"shape","id":"sh/y9c7mt0j","slide":5,"name":"capacity-High","bbox":[522,248,339,72]}
+{"kind":"textbox","id":"sh/zal8fy14","slide":5,"name":"capacity-text-High","text":"High\n30%","textPreview":"High | 30%","textChars":8,"textLines":2,"bbox":[522,261,339,46]}
+{"kind":"shape","id":"sh/72dkj2xk","slide":5,"name":"capacity-Medium","bbox":[861,248,226,72]}
+{"kind":"textbox","id":"sh/614jaxwz","slide":5,"name":"capacity-text-Medium","text":"Medium\n20%","textPreview":"Medium | 20%","textChars":10,"textLines":2,"bbox":[861,261,226,46]}
+{"kind":"shape","id":"sh/t4v2lcfq","slide":5,"name":"capacity-Low","bbox":[1087,248,113,72]}
+{"kind":"textbox","id":"sh/s3m1c7e5","slide":5,"name":"capacity-text-Low","text":"Low\n10%","textPreview":"Low | 10%","textChars":7,"textLines":2,"bbox":[1087,261,113,46]}
+{"kind":"textbox","id":"sh/jedkf2x8","slide":5,"name":"step-num-0","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[82,410,44,44]}
+{"kind":"textbox","id":"sh/id4j6xw3","slide":5,"name":"step-text-0","text":"Process Critical first","textPreview":"Process Critical first","textChars":22,"textLines":1,"bbox":[140,415,190,42]}
+{"kind":"textbox","id":"sh/50v2hsfe","slide":5,"name":"step-arrow-0","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[320,414,38,34]}
+{"kind":"textbox","id":"sh/kzm18net","slide":5,"name":"step-num-1","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[362,410,44,44]}
+{"kind":"textbox","id":"sh/3axkrmxs","slide":5,"name":"step-text-1","text":"Unused capacity → High","textPreview":"Unused capacity → High","textChars":22,"textLines":1,"bbox":[420,415,190,42]}
+{"kind":"textbox","id":"sh/29ojihw7","slide":5,"name":"step-arrow-1","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[600,414,38,34]}
+{"kind":"textbox","id":"sh/y1cv6pkr","slide":5,"name":"step-num-2","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[642,410,44,44]}
+{"kind":"textbox","id":"sh/z2lwzulw","slide":5,"name":"step-text-2","text":"Unused capacity → Medium","textPreview":"Unused capacity → Medium","textChars":24,"textLines":1,"bbox":[700,415,190,42]}
+{"kind":"textbox","id":"sh/k3ud8f2h","slide":5,"name":"step-arrow-2","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[880,414,38,34]}
+{"kind":"textbox","id":"sh/l43e1k32","slide":5,"name":"step-num-3","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[922,410,44,44]}
+{"kind":"textbox","id":"sh/m5cvapkn","slide":5,"name":"step-text-3","text":"Unused capacity → Low","textPreview":"Unused capacity → Low","textChars":21,"textLines":1,"bbox":[980,415,190,42]}
+{"kind":"textbox","id":"sh/76lw3ul8","slide":5,"name":"queue-note","text":"Requests that cannot be processed remain in their original queue for the next cycle.","textPreview":"Requests that cannot be processed remain in their original queue for the next cycle.","textChars":84,"textLines":1,"bbox":[210,555,860,32]}
+{"kind":"notes","id":"nt/8kuryd","slide":5,"text":""}
+{"kind":"slide","id":"sl/12w8g4","slide":6,"title":"05 / RESOLUTION INTELLIGENCE","textShapes":13}
+{"kind":"textbox","id":"sh/ri1gbupk","slide":6,"name":"section-6","text":"05 / RESOLUTION INTELLIGENCE","textPreview":"05 / RESOLUTION INTELLIGENCE","textChars":28,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/sjah4z65","slide":6,"name":"title-6","text":"Approved technician knowledge is checked before the general knowledge base","textPreview":"Approved technician knowledge is checked before the general knowledge base","textChars":74,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/tkjyd47q","slide":6,"name":"rule-6","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/elsz6pob","slide":6,"name":"footer-6","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"textbox","id":"sh/fm1gfupw","slide":6,"name":"rag-copy","text":"This ordering lets a technician-approved resolution influence future complaints without replacing the broader telecom knowledge base.","textPreview":"This ordering lets a technician-approved resolution influence future complaints without replacing the broader telecom knowledge base.","textChars":133,"textLines":1,"bbox":[48,164,1120,52]}
+{"kind":"shape","id":"sh/gnuh8z6h","slide":6,"name":"rag-query","bbox":[54,280,220,132]}
+{"kind":"textbox","id":"sh/1o3ih472","slide":6,"name":"rag-query-text","text":"New complaint","textPreview":"New complaint","textChars":13,"textLines":1,"bbox":[78,321,172,34]}
+{"kind":"textbox","id":"sh/ap8zu5o7","slide":6,"name":"rag-a1","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[282,328,60,34]}
+{"kind":"shape","id":"sh/vqhg3aps","slide":6,"name":"rag-resolver","bbox":[350,235,290,222]}
+{"kind":"textbox","id":"sh/r6pgn258","slide":6,"name":"rag-resolver-title","text":"Resolver Base","textPreview":"Resolver Base","textChars":13,"textLines":1,"bbox":[382,268,226,34]}
+{"kind":"textbox","id":"sh/65gfexon","slide":6,"name":"rag-resolver-body","text":"Technician-approved\nMarkdown + embeddings\n\nIf matched: use this case","textPreview":"Technician-approved | Markdown + embeddings |  | If matched: use this case","textChars":68,"textLines":4,"bbox":[382,324,226,100]}
+{"kind":"textbox","id":"sh/t87ypcne","slide":6,"name":"rag-a2","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[650,328,60,34]}
+{"kind":"shape","id":"sh/s7yxg76t","slide":6,"name":"rag-kb","bbox":[718,235,250,222]}
+{"kind":"textbox","id":"sh/ji5gj25c","slide":6,"name":"rag-kb-title","text":"Knowledge Base","textPreview":"Knowledge Base","textChars":14,"textLines":1,"bbox":[744,268,198,34]}
+{"kind":"textbox","id":"sh/ihwfaxor","slide":6,"name":"rag-kb-body","text":"Hierarchical telecom\narticles + sections\n\nUsed when no resolver\nmatch is found","textPreview":"Hierarchical telecom | articles + sections |  | Used when no resolver | match is found","textChars":78,"textLines":5,"bbox":[744,324,198,100]}
+{"kind":"textbox","id":"sh/5k7ylsni","slide":6,"name":"rag-a3","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[978,328,60,34]}
+{"kind":"shape","id":"sh/4jyxcn6x","slide":6,"name":"rag-llm","bbox":[1044,280,180,132]}
+{"kind":"textbox","id":"sh/ve5gfi50","slide":6,"name":"rag-llm-text","text":"LLM\nresponse","textPreview":"LLM | response","textChars":12,"textLines":2,"bbox":[1060,309,148,70]}
+{"kind":"notes","id":"nt/12w8g4","slide":6,"text":""}
+{"kind":"slide","id":"sl/bfhpvv","slide":7,"title":"06 / CUSTOMER FEEDBACK","textShapes":12}
+{"kind":"textbox","id":"sh/ap8f69s3","slide":7,"name":"section-7","text":"06 / CUSTOMER FEEDBACK","textPreview":"06 / CUSTOMER FEEDBACK","textChars":22,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/xsjy14ru","slide":7,"name":"title-7","text":"Yes closes the loop; No creates durable technician knowledge","textPreview":"Yes closes the loop; No creates durable technician knowledge","textChars":60,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/wrqx8za9","slide":7,"name":"rule-7","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/nmhgvu9s","slide":7,"name":"footer-7","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"shape","id":"sh/m18f2ps7","slide":7,"name":"feedback-start","bbox":[50,290,210,110]}
+{"kind":"textbox","id":"sh/9ozyx4ri","slide":7,"name":"feedback-start-text","text":"AI response\nshown to customer","textPreview":"AI response | shown to customer","textChars":29,"textLines":2,"bbox":[68,316,174,56]}
+{"kind":"textbox","id":"sh/onqx4zad","slide":7,"name":"feedback-arrow","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[274,325,54,34]}
+{"kind":"shape","id":"sh/zyxwru9g","slide":7,"name":"feedback-choice","bbox":[340,255,240,180]}
+{"kind":"textbox","id":"sh/exofypsv","slide":7,"name":"feedback-choice-title","text":"Did this solve it?","textPreview":"Did this solve it?","textChars":18,"textLines":1,"bbox":[365,290,190,32]}
+{"kind":"textbox","id":"sh/8r2hg76x","slide":7,"name":"feedback-choice-body","text":"YES  →  Thank you + discard\n\nNO  →  capture feedback","textPreview":"YES  →  Thank you + discard |  | NO  →  capture feedback","textChars":52,"textLines":3,"bbox":[370,345,180,62]}
+{"kind":"textbox","id":"sh/9sbipc7i","slide":7,"name":"feedback-arrow2","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[596,325,54,34]}
+{"kind":"shape","id":"sh/mp0zeho7","slide":7,"name":"feedback-admin","bbox":[662,255,240,180]}
+{"kind":"textbox","id":"sh/7q9gnmps","slide":7,"name":"feedback-admin-title","text":"Admin review","textPreview":"Admin review","textChars":12,"textLines":1,"bbox":[690,289,184,32]}
+{"kind":"textbox","id":"sh/knihc761","slide":7,"name":"feedback-admin-body","text":"Complaint\nAI response\nCustomer feedback","textPreview":"Complaint | AI response | Customer feedback","textChars":39,"textLines":3,"bbox":[690,345,184,72]}
+{"kind":"textbox","id":"sh/lorylc7m","slide":7,"name":"feedback-arrow3","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[918,325,54,34]}
+{"kind":"shape","id":"sh/y10zaxov","slide":7,"name":"feedback-resolve","bbox":[982,290,240,110]}
+{"kind":"textbox","id":"sh/zm9gj2pg","slide":7,"name":"feedback-resolve-text","text":"Technician response\n→ resolver_base","textPreview":"Technician response | → resolver_base","textChars":35,"textLines":2,"bbox":[1000,316,204,56]}
+{"kind":"notes","id":"nt/bfhpvv","slide":7,"text":""}
+{"kind":"slide","id":"sl/wuy3l2","slide":8,"title":"07 / HUMAN ESCALATION","textShapes":12}
+{"kind":"textbox","id":"sh/gjqdg3y9","slide":8,"name":"section-8","text":"07 / HUMAN ESCALATION","textPreview":"07 / HUMAN ESCALATION","textChars":21,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/fyhcnyxo","slide":8,"name":"title-8","text":"Escalation gives the technician the context needed to respond by email","textPreview":"Escalation gives the technician the context needed to respond by email","textChars":70,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/ex8vetg3","slide":8,"name":"rule-8","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/twzulofi","slide":8,"name":"footer-8","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"textbox","id":"sh/sv6dcjyx","slide":8,"name":"esc-copy","text":"When policy or the LLM marks a complaint for escalation, the customer sees a clear handoff message instead of an uncertain automated answer.","textPreview":"When policy or the LLM marks a complaint for escalation, the customer sees a clear handoff message instead of an uncertain automated answer.","textChars":140,"textLines":1,"bbox":[48,164,1120,52]}
+{"kind":"shape","id":"sh/ruxcjexs","slide":8,"name":"esc-customer","bbox":[62,282,300,190]}
+{"kind":"textbox","id":"sh/6tova9g7","slide":8,"name":"esc-customer-title","text":"Customer","textPreview":"Customer","textChars":8,"textLines":1,"bbox":[94,315,236,34]}
+{"kind":"textbox","id":"sh/5sfuhofm","slide":8,"name":"esc-customer-body","text":"Receives:\n“Your response has been forwarded\nto our technician. They will\ncontact you soon.”","textPreview":"Receives: | “Your response has been forwarded | to our technician. They will | contact you soon.”","textChars":91,"textLines":4,"bbox":[90,365,244,76]}
+{"kind":"textbox","id":"sh/4r6t8jy1","slide":8,"name":"esc-a1","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[388,350,64,34]}
+{"kind":"shape","id":"sh/2x0fmpwv","slide":8,"name":"esc-admin","bbox":[462,252,350,250]}
+{"kind":"textbox","id":"sh/3y9wfudg","slide":8,"name":"esc-admin-title","text":"Technician workspace","textPreview":"Technician workspace","textChars":20,"textLines":1,"bbox":[500,284,274,34]}
+{"kind":"textbox","id":"sh/ozixoze1","slide":8,"name":"esc-admin-body","text":"Sees complaint + escalation reason\n\nWrites a customer-support message\n\nSubmits once","textPreview":"Sees complaint + escalation reason |  | Writes a customer-support message |  | Submits once","textChars":83,"textLines":5,"bbox":[502,348,270,108]}
+{"kind":"textbox","id":"sh/p0reh4vm","slide":8,"name":"esc-a2","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[838,350,64,34]}
+{"kind":"shape","id":"sh/e9gfi5wz","slide":8,"name":"esc-mail","bbox":[918,282,300,190]}
+{"kind":"textbox","id":"sh/fupwbaxk","slide":8,"name":"esc-mail-title","text":"Support email","textPreview":"Support email","textChars":13,"textLines":1,"bbox":[950,315,236,34]}
+{"kind":"textbox","id":"sh/gvyxkfe5","slide":8,"name":"esc-mail-body","text":"Generic update sent to\nthe customer’s address\nwith the support message","textPreview":"Generic update sent to | the customer’s address | with the support message","textChars":70,"textLines":3,"bbox":[950,370,236,66]}
+{"kind":"notes","id":"nt/wuy3l2","slide":8,"text":""}
+{"kind":"slide","id":"sl/hbo6es","slide":9,"title":"08 / OPERATIONS","textShapes":8}
+{"kind":"textbox","id":"sh/rmh8nuxg","slide":9,"name":"section-9","text":"08 / OPERATIONS","textPreview":"08 / OPERATIONS","textChars":15,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/s7a9wze1","slide":9,"name":"title-9","text":"The admin view is focused on action, not model noise","textPreview":"The admin view is focused on action, not model noise","textChars":52,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/d8jqpkfm","slide":9,"name":"rule-9","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/e9srypw7","slide":9,"name":"footer-9","text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"textbox","id":"sh/fa1sruxc","slide":9,"name":"admin-copy","text":"The dashboard is organized around the two human workflows: escalated complaints and negative feedback awaiting review.","textPreview":"The dashboard is organized around the two human workflows: escalated complaints and negative feedback awaiting review.","textChars":118,"textLines":1,"bbox":[48,164,1120,52]}
+{"kind":"shape","id":"sh/0ba90zex","slide":9,"name":"admin-left","bbox":[70,260,520,280]}
+{"kind":"textbox","id":"sh/1cjat4fi","slide":9,"name":"admin-left-title","text":"Escalated Complaints","textPreview":"Escalated Complaints","textChars":20,"textLines":1,"bbox":[104,294,390,34]}
+{"kind":"textbox","id":"sh/mdsr29w3","slide":9,"name":"admin-left-body","text":"• Search and filter open cases\n• See complaint and escalation reason\n• Enter a support message\n• Send customer email\n• Prevent duplicate submissions","textPreview":"• Search and filter open cases | • See complaint and escalation reason | • Enter a support message | • Send customer email | • Prevent du...","textChars":148,"textLines":5,"bbox":[104,360,430,130]}
+{"kind":"shape","id":"sh/nelsvexo","slide":9,"name":"admin-right","bbox":[690,260,520,280]}
+{"kind":"textbox","id":"sh/fi5o7q1w","slide":9,"name":"admin-right-title","text":"Negative Feedback","textPreview":"Negative Feedback","textChars":17,"textLines":1,"bbox":[724,294,390,34]}
+{"kind":"textbox","id":"sh/ehw7yl0b","slide":9,"name":"admin-right-body","text":"• Review the original complaint\n• Compare AI response with feedback\n• Enter approved resolution\n• Save to resolver_base\n• Email the customer","textPreview":"• Review the original complaint | • Compare AI response with feedback | • Enter approved resolution | • Save to resolver_base | • Email t...","textChars":140,"textLines":5,"bbox":[724,360,430,130]}
+{"kind":"notes","id":"nt/hbo6es","slide":9,"text":""}
+{"kind":"slide","id":"sl/89g6zm","slide":10,"title":"09 / DEPLOYMENT","textShapes":16}
+{"kind":"textbox","id":"sh/beloril4","slide":10,"name":"section-10","text":"09 / DEPLOYMENT","textPreview":"09 / DEPLOYMENT","textChars":15,"textLines":1,"bbox":[48,28,300,22]}
+{"kind":"textbox","id":"sh/wfup0n2p","slide":10,"name":"title-10","text":"For AWS, keep the workflow durable as traffic grows","textPreview":"For AWS, keep the workflow durable as traffic grows","textChars":51,"textLines":1,"bbox":[48,55,1120,66]}
+{"kind":"shape","id":"sh/xg36ts3a","slide":10,"name":"rule-10","bbox":[48,130,1184,0]}
+{"kind":"textbox","id":"sh/mps7udkn","slide":10,"name":"footer-10","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1182,676,50,20]}
+{"kind":"textbox","id":"sh/na1onil8","slide":10,"name":"aws-copy","text":"The current in-process queue is suitable for one running task. A multi-instance deployment should externalize queue state and request status.","textPreview":"The current in-process queue is suitable for one running task. A multi-instance deployment should externalize queue state and request sta...","textChars":141,"textLines":1,"bbox":[48,164,1120,52]}
+{"kind":"textbox","id":"sh/obapwn2t","slide":10,"name":"aws-arrow-0","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[272,304,62,34]}
+{"kind":"textbox","id":"sh/9cj6p83y","slide":10,"name":"aws-arrow-1","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[532,304,62,34]}
+{"kind":"textbox","id":"sh/6lc76xkr","slide":10,"name":"aws-arrow-2","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[792,304,62,34]}
+{"kind":"shape","id":"sh/7658z2lc","slide":10,"name":"aws-Frontend","bbox":[70,250,202,148]}
+{"kind":"textbox","id":"sh/vmhonahs","slide":10,"name":"aws-title-Frontend","text":"Frontend","textPreview":"Frontend","textChars":8,"textLines":1,"bbox":[86,276,170,32]}
+{"kind":"textbox","id":"sh/al87u5g7","slide":10,"name":"aws-body-Frontend","text":"Static hosting\nS3 / CloudFront","textPreview":"Static hosting | S3 / CloudFront","textChars":30,"textLines":2,"bbox":[86,330,170,50]}
+{"kind":"shape","id":"sh/x8zqpkfy","slide":10,"name":"aws-API","bbox":[330,250,202,148]}
+{"kind":"textbox","id":"sh/w7qpwfyd","slide":10,"name":"aws-title-API","text":"API","textPreview":"API","textChars":3,"textLines":1,"bbox":[346,276,170,32]}
+{"kind":"textbox","id":"sh/jah8rax4","slide":10,"name":"aws-body-API","text":"FastAPI\nECS / App Runner","textPreview":"FastAPI | ECS / App Runner","textChars":24,"textLines":2,"bbox":[346,330,170,50]}
+{"kind":"shape","id":"sh/i987ypgj","slide":10,"name":"aws-Queue","bbox":[590,250,202,148]}
+{"kind":"textbox","id":"sh/5cjqtkfu","slide":10,"name":"aws-title-Queue","text":"Queue","textPreview":"Queue","textChars":5,"textLines":1,"bbox":[606,276,170,32]}
+{"kind":"textbox","id":"sh/kbqp0fy9","slide":10,"name":"aws-body-Queue","text":"SQS\npriority metadata","textPreview":"SQS | priority metadata","textChars":21,"textLines":2,"bbox":[606,330,170,50]}
+{"kind":"shape","id":"sh/7e18vux0","slide":10,"name":"aws-Storage","bbox":[850,250,202,148]}
+{"kind":"textbox","id":"sh/6ds72pgf","slide":10,"name":"aws-title-Storage","text":"Storage","textPreview":"Storage","textChars":7,"textLines":1,"bbox":[866,276,170,32]}
+{"kind":"textbox","id":"sh/2lwjax4z","slide":10,"name":"aws-body-Storage","text":"DynamoDB\nChroma / S3","textPreview":"DynamoDB | Chroma / S3","textChars":20,"textLines":2,"bbox":[866,330,170,50]}
+{"kind":"shape","id":"sh/nm50jilk","slide":10,"name":"aws-close","bbox":[180,500,920,82]}
+{"kind":"textbox","id":"sh/one1cnm5","slide":10,"name":"aws-close-text","text":"Core takeaway: prioritize every request, ground answers in approved knowledge, and route exceptions to humans with context.","textPreview":"Core takeaway: prioritize every request, ground answers in approved knowledge, and route exceptions to humans with context.","textChars":123,"textLines":1,"bbox":[220,522,840,40]}
+{"kind":"notes","id":"nt/89g6zm","slide":10,"text":""}

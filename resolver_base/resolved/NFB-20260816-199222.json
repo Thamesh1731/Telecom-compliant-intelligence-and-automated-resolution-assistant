@@ -1,0 +1,16 @@
+{
+  "feedback_id": "NFB-20260816-199222",
+  "complaint_id": "4e0eac2b-f45f-4816-a0d5-dfa46302993b",
+  "category": "internet",
+  "subcategory": "Wi-Fi",
+  "complaint": "unable to connect to wifi router",
+  "ai_solution": "Problem:\nThe customer is unable to connect to their Wi-Fi router.\n\nRecommended Solution:\n1. Check Wi-Fi on the affected device: Verify that Wi-Fi is enabled and that the device is connected to the correct wireless network.\n2. Move closer to the router: Move the affected device closer to the router and test the connection.\n3. Check router placement: Ensure the router is positioned in a relatively central and open location, avoiding areas with physical obstructions or sources of interference.\n\nReason:\nThe customer's complaint matches the common symptoms of Wi-Fi connection problems, and the recommended solution follows the initial diagnosis and troubleshooting procedure outlined in the retrieved knowledge base.\n\nEscalation:\nNo\n\nEscalation Reason:\nNot required, as the customer's issue can be resolved through standard troubleshooting steps.\n\nConfidence:\nMedium\n\nNote: The customer's complaint is not explicitly stated as a complete loss of internet access, which would require further investigation and potential escalation. However, the symptoms described suggest a Wi-Fi connection issue, and the recommended solution is based on the provided knowledge base.",
+  "feedback": "not solved",
+  "email": "thameshcsevec@gmail.com",
+  "status": "resolved",
+  "submitted_at": "2026-08-16T07:32:46.166665+00:00",
+  "resolved_solution": "Buy another device",
+  "resolved_at": "2026-08-16T07:33:02.786419+00:00",
+  "email_status": "sent",
+  "email_sent_at": "2026-08-16T07:33:07.754591+00:00"
+}
