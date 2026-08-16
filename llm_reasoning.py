@@ -1,13 +1,3 @@
-"""
-llm_reasoning.py
-
-Wraps the Groq LLM call (llama-3.1-8b-instant) that synthesizes a structured
-resolution (Problem / Recommended Solution / Reason / Escalation / Confidence)
-from the top retrieved knowledge-base documents, exactly matching the prompt
-and output contract used in your Colab notebook -- just adapted to run
-locally (env var instead of Colab's userdata) instead of inside Colab.
-"""
-
 import os
 import re
 from groq import Groq
@@ -306,4 +296,3 @@ def generate_solution(complaint, retrieved_results):
     except Exception as e:
         print(f"[llm_reasoning] Groq LLM call unavailable ({e}), using RAG fallback synthesis.")
         return fallback_generate_solution(complaint, retrieved_results)
-
