@@ -628,7 +628,7 @@ function renderNegativeFeedbackTable() {
   tbody.innerHTML = '';
 
   if (negativeFeedbackItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-muted);">No negative feedback items pending. All resolutions accepted by customers!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--text-muted);">No negative feedback items pending. All resolutions accepted by customers!</td></tr>`;
     return;
   }
 
@@ -637,7 +637,6 @@ function renderNegativeFeedbackTable() {
     tr.style.cursor = 'pointer';
     tr.onclick = () => openNegativeFeedbackDetail(item.feedback_id);
 
-    const categoryText = item.category || 'General';
     const complaintPreview = item.complaint && item.complaint.length > 50
       ? item.complaint.substring(0, 50) + '...'
       : (item.complaint || 'N/A');
@@ -654,7 +653,6 @@ function renderNegativeFeedbackTable() {
 
     tr.innerHTML = `
       <td><span class="ticket-id">${escapeHtml(item.feedback_id)}</span></td>
-      <td><span class="category-badge"><i class="fa-solid ${getCategoryIcon(categoryText)}"></i> ${escapeHtml(categoryText)}</span></td>
       <td><span class="reason-pill" title="${escapeHtml(item.complaint)}">${escapeHtml(complaintPreview)}</span></td>
       <td><span class="reason-pill" title="${escapeHtml(item.ai_solution)}">${escapeHtml(solutionPreview)}</span></td>
       <td><span class="reason-pill" style="color: #f87171;" title="${escapeHtml(item.feedback)}">${escapeHtml(feedbackPreview)}</span></td>
