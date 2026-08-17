@@ -1,14 +1,4 @@
-"""Priority request queues for complaint processing.
-
-The API classifies and enqueues a complaint quickly. A single background
-worker drains the queues in Critical -> High -> Medium -> Low order, carrying
-unused capacity down to the next queue before invoking the existing resolver,
-RAG, and LLM pipeline.
-
-This is an in-process queue for local development and a single AWS task. For
-multi-instance AWS deployment, replace this backend with SQS/DynamoDB while
-keeping the same scheduler contract.
-"""
+"""In-process priority queues for complaint processing."""
 
 import os
 import sys

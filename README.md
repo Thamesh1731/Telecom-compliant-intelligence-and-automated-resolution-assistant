@@ -16,7 +16,6 @@ This project implements a **Hierarchical Retrieval-Augmented Generation (RAG) Re
   * **Level 1**: Document Scoring (semantic, subcategory, intent, and category soft compatibilities).
   * **Level 2**: Ambiguity Detection (evaluates score differences to detect ambiguous queries).
   * **Level 3**: Associated Section Retrieval (fetches all sections of selected documents and applies MMR-based section diversification).
-* **`eval_retrieval.py`**: Test suite containing 29 representative complaints to evaluate Recall metrics and Actionable Section Retrieval Rate.
 
 ---
 
@@ -81,6 +80,5 @@ You will be prompted to enter a complaint (e.g. *"my number isn't working after 
 To execute the automated recall and actionable knowledge evaluation on the 29 test suite complaints:
 
 ```bash
-python eval_retrieval.py
 ```
 This prints the mapped categories, selected documents, and whether they passed the Recall@1, Recall@3, Recall@5, and Actionable Section metrics, followed by summary percentages.

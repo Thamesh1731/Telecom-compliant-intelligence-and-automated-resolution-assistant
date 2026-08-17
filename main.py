@@ -24,20 +24,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, field_validator
 from dotenv import load_dotenv
-
-# ---------------------------------------------------------------------------
 # Environment & Path Configuration
-# ---------------------------------------------------------------------------
 _ENV_FILE = Path(__file__).parent / ".env"
 load_dotenv(_ENV_FILE, override=True)
 
 _PROJECT_ROOT = Path(__file__).parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
-
-# ---------------------------------------------------------------------------
 # Import Model Server Logic & Pipelines
-# ---------------------------------------------------------------------------
 import model_server
 from model_server import (
     handle_new_complaint,
@@ -59,10 +53,7 @@ from database import (
 
 # Initialize database schema (AWS RDS MySQL / SQLite) on backend launch
 init_db()
-
-# ---------------------------------------------------------------------------
 # Global State (Synchronized with Database)
-# ---------------------------------------------------------------------------
 ESCALATED_TICKETS: List[Dict[str, Any]] = []
 NEGATIVE_FEEDBACK_ITEMS: List[Dict[str, Any]] = []
 RESOLUTION_LOCK = threading.Lock()
@@ -103,10 +94,7 @@ def _load_pending_feedback():
     return items
 
 NEGATIVE_FEEDBACK_ITEMS = _load_pending_feedback()
-
-# ---------------------------------------------------------------------------
 # FastAPI Application Setup
-# ---------------------------------------------------------------------------
 app = FastAPI(
     title="Telecom Complaint Intelligence & Resolution API",
     version="3.0.0",
@@ -124,11 +112,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# ---------------------------------------------------------------------------
 # Pydantic Schemas
-# ---------------------------------------------------------------------------
 class ComplaintRequest(BaseModel):
     complaint: str
     email: Optional[str] = ""
@@ -170,11 +154,7 @@ class ResolveTicketRequest(BaseModel):
 
 class SimpleQueryRequest(BaseModel):
     complaint: str
-
-
-# ---------------------------------------------------------------------------
 # Escalation Detection Helper
-# ---------------------------------------------------------------------------
 def check_escalation(complaint_text: str, solution_text: str) -> tuple[bool, Optional[str]]:
     """
     Check if ticket requires escalation based on:
@@ -213,11 +193,7 @@ def generate_ticket_id() -> str:
     today = datetime.now().strftime("%Y%m%d")
     suffix = str(uuid.uuid4().int)[:6]
     return f"TCK-{today}-{suffix}"
-
-
-# ---------------------------------------------------------------------------
 # API Routes
-# ---------------------------------------------------------------------------
 @app.get("/health")
 async def health():
     return {
@@ -331,11 +307,7 @@ async def process_complaint(request: ComplaintRequest):
         "priority": priority_result.get("priority"),
         "urgency": priority_result.get("urgency"),
     }
-
-
-# ---------------------------------------------------------------------------
 # Negative Feedback Pipeline
-# ---------------------------------------------------------------------------
 @app.post("/api/negative-feedback")
 async def submit_negative_feedback(req: NegativeFeedbackRequest):
     """
@@ -490,11 +462,7 @@ def resolve_feedback(req: ResolveFeedbackRequest):
         "email_status": email_status,
         "email_error": email_error,
     }
-
-
-# ---------------------------------------------------------------------------
 # Admin Escalation Tickets API
-# ---------------------------------------------------------------------------
 @app.get("/api/admin/tickets")
 async def get_admin_tickets():
     """Return all real escalated tickets from the database."""
@@ -566,11 +534,7 @@ def resolve_escalated_ticket(req: ResolveTicketRequest):
                 else "Support message saved, but customer email delivery failed."
             ),
         }
-
-
-# ---------------------------------------------------------------------------
 # Mount Admin Portal Static Directory
-# ---------------------------------------------------------------------------
 admin_dir = Path(__file__).parent / "admin"
 if admin_dir.exists():
     app.mount("/admin", StaticFiles(directory=str(admin_dir), html=True), name="admin")
