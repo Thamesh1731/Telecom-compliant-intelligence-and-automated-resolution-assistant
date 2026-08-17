@@ -655,22 +655,21 @@ function renderNegativeFeedbackTable() {
     tr.style.cursor = 'pointer';
     tr.onclick = () => openNegativeFeedbackDetail(item.feedback_id);
 
-    const solutionPreview = item.ai_solution && item.ai_solution.length > 60
-      ? item.ai_solution.substring(0, 60) + '...'
+    const complaintText = item.complaint && item.complaint.length > 70
+      ? item.complaint.substring(0, 70) + '...'
+      : (item.complaint || 'N/A');
+    const solutionText = item.ai_solution && item.ai_solution.length > 70
+      ? item.ai_solution.substring(0, 70) + '...'
       : (item.ai_solution || 'N/A');
-    const feedbackPreview = item.feedback && item.feedback.length > 60
-      ? item.feedback.substring(0, 60) + '...'
+    const feedbackText = item.feedback && item.feedback.length > 70
+      ? item.feedback.substring(0, 70) + '...'
       : (item.feedback || 'N/A');
-
-    const submittedDate = item.submitted_at
-      ? new Date(item.submitted_at).toLocaleString()
-      : 'Unknown';
 
     tr.innerHTML = `
       <td><span class="ticket-id">${escapeHtml(item.feedback_id)}</span></td>
-      <td><span class="reason-pill" title="${escapeHtml(item.ai_solution)}">${escapeHtml(solutionPreview)}</span></td>
-      <td><span class="reason-pill" style="color: #f87171;" title="${escapeHtml(item.feedback)}">${escapeHtml(feedbackPreview)}</span></td>
-      <td><span class="badge badge-subtle"><i class="fa-solid fa-clock"></i> ${escapeHtml(submittedDate)}</span></td>
+      <td><span class="reason-pill" title="${escapeHtml(item.complaint)}">${escapeHtml(complaintText)}</span></td>
+      <td><span class="reason-pill" title="${escapeHtml(item.ai_solution)}">${escapeHtml(solutionText)}</span></td>
+      <td><span class="reason-pill" style="color: #f87171;" title="${escapeHtml(item.feedback)}">${escapeHtml(feedbackText)}</span></td>
       <td>
         <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openNegativeFeedbackDetail('${escapeHtml(item.feedback_id)}')">
           <i class="fa-solid fa-wrench"></i> Review & Resolve
