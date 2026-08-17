@@ -1,4 +1,4 @@
-﻿"""
+"""
 priority_model.py
 =================
 Telecom complaint priority model.
@@ -126,6 +126,18 @@ def _load_severity_model() -> None:
         "severity_outputs",
         "severity_transformer",
     )
+
+    # Check if weights exist; if not, download from S3
+    if not os.path.exists(os.path.join(severity_dir, "model.safetensors")):
+        try:
+            parent_dir = os.path.dirname(_HERE)
+            if parent_dir not in sys.path:
+                sys.path.insert(0, parent_dir)
+            from model_downloader import ensure_model_directory
+            logger.info("Severity model files missing locally. Downloading from S3...")
+            ensure_model_directory(s3_prefix="priority1/", local_dir=_HERE)
+        except Exception as dl_err:
+            logger.warning("Auto-download from S3 failed: %s", dl_err)
 
     try:
         import torch
