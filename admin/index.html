@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Agent Portal | Telecom AI Triage System</title>
   <meta name="description"
     content="Human Agent Portal for Telecom AI Complaint Triage - Exception Handling & High-Risk Ticket Resolution.">
@@ -15,7 +18,7 @@
     rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2.5">
 </head>
 
 <body class="dark-theme">
@@ -122,14 +125,6 @@
           <span class="nav-badge alert" id="nav-neg-feedback-count">0</span>
         </button>
       </nav>
-
-      <div class="sidebar-footer">
-        <div class="ai-status-pill">
-          <span class="pulse-dot"></span>
-          <span>AI Triage Engine Active</span>
-        </div>
-        <p class="system-quote">"AI handles routine volume. Humans handle exceptions."</p>
-      </div>
     </aside>
 
     <!-- Main Content Area -->
@@ -161,9 +156,8 @@
             <h2><i class="fa-solid fa-list-check"></i> System-Wide Escalations</h2>
             <div class="chip-filters">
               <button class="chip active" data-filter="all">All</button>
-              <button class="chip" data-filter="low-confidence">Low AI Confidence</button>
-              <button class="chip" data-filter="repeat">Repeated Complaints</button>
-              <button class="chip" data-filter="high-risk">90%+ Risk</button>
+              <button class="chip" data-filter="escalated">Escalated</button>
+              <button class="chip" data-filter="resolved">Resolved</button>
             </div>
           </div>
 
@@ -207,11 +201,9 @@
               <thead>
                 <tr>
                   <th>Feedback ID</th>
-                  <th>Category</th>
-                  <th>Complaint Preview</th>
-                  <th>AI Solution Preview</th>
+                  <th>Customer Complaint</th>
+                  <th>AI Solution</th>
                   <th>Customer Feedback</th>
-                  <th>Submitted</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -233,10 +225,7 @@
         <div class="drawer-header-info">
           <div class="ticket-badge-group">
             <span class="ticket-number" id="drawer-ticket-id">#10291</span>
-            <span class="badge badge-high" id="drawer-priority-badge">HIGH PRIORITY</span>
-            <span class="badge badge-risk" id="drawer-risk-badge">RISK: 94%</span>
           </div>
-          <h2 class="drawer-title" id="drawer-issue-title">Network Outage & Fiber Service Disruption</h2>
         </div>
         <button class="close-drawer-btn" id="close-drawer-btn" title="Close Panel">
           <i class="fa-solid fa-xmark"></i>
@@ -342,7 +331,7 @@
 
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2.5"></script>
 </body>
 
 </html>

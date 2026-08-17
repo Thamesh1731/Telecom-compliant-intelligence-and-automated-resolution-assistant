@@ -94,12 +94,24 @@ class EscalatedTicketRecord(Base):
                 why_list = json.loads(self.why_escalated)
             except Exception:
                 why_list = [self.why_escalated]
+
+        cat = self.category
+        if not cat or cat == "General":
+            try:
+                from retriever import classify_category, normalize_category
+                ranked = classify_category(self.complaint_text)
+                cat = normalize_category(ranked[0][0])
+            except Exception:
+                cat = "Broadband / Internet"
+
         return {
             "id": self.ticket_id,
             "complaintId": self.complaint_id,
             "customerEmail": self.customer_email or "",
+            "customer": self.customer_email or "Customer Submission",
             "complaintText": self.complaint_text,
-            "predictedCategory": self.category or "General",
+            "category": cat,
+            "predictedCategory": cat,
             "subcategory": self.subcategory or "General",
             "confidence": self.confidence,
             "priority": self.priority or "HIGH",
@@ -225,7 +237,7 @@ def db_save_escalated_ticket(ticket_data: Dict[str, Any]) -> None:
             complaint_id=ticket_data.get("complaintId"),
             customer_email=ticket_data.get("customerEmail", ""),
             complaint_text=ticket_data["complaintText"],
-            category=ticket_data.get("predictedCategory", "General"),
+            category=ticket_data.get("category") or ticket_data.get("predictedCategory") or "Internet / Broadband",
             subcategory=ticket_data.get("subcategory", "General"),
             confidence=ticket_data.get("confidence", 0.9),
             priority=ticket_data.get("priority", "HIGH"),

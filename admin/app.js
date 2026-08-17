@@ -291,17 +291,61 @@ function updateMetricsUI() {
   if (metricEscalated) metricEscalated.innerText = totalAssigned;
 }
 
+function formatCategoryName(cat) {
+  if (!cat || cat === 'General') return 'Account / Subscription';
+  const clean = String(cat).trim();
+  const map = {
+    'internet': 'Internet / Broadband',
+    'broadband': 'Internet / Broadband',
+    'cable_tv': 'Cable TV',
+    'cable': 'Cable TV',
+    'number_calling': 'Number / Calling',
+    'calling': 'Number / Calling',
+    'number_porting': 'Number Porting',
+    'porting': 'Number Porting',
+    'account_subscription': 'Account / Subscription',
+    'subscription': 'Account / Subscription',
+    'coverage_outage': 'Coverage & Outage',
+    'outage': 'Coverage & Outage',
+    'network': 'Network / Coverage',
+    'installation_technician': 'Technician & Installation',
+    'technician': 'Technician & Installation',
+    'security_fraud': 'Security & Fraud',
+    'fraud': 'Security & Fraud',
+    'device_handset': 'Device / Handset',
+    'device': 'Device / Handset',
+    'billing': 'Billing / Account',
+    'payment': 'Billing & Payment',
+    'roaming': 'Roaming & International',
+    'sim': 'SIM / Mobile Service'
+  };
+  if (map[clean.toLowerCase()]) return map[clean.toLowerCase()];
+  return clean.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function getCategoryIcon(cat) {
+  const c = String(cat || '').toLowerCase();
+  if (c.includes('internet') || c.includes('broadband') || c.includes('wifi')) return 'fa-wifi';
+  if (c.includes('tv') || c.includes('cable')) return 'fa-tv';
+  if (c.includes('call') || c.includes('voice')) return 'fa-phone-volume';
+  if (c.includes('port')) return 'fa-arrow-right-arrow-left';
+  if (c.includes('bill') || c.includes('account') || c.includes('subscri')) return 'fa-file-invoice-dollar';
+  if (c.includes('cover') || c.includes('outage') || c.includes('network')) return 'fa-tower-cell';
+  if (c.includes('tech') || c.includes('install')) return 'fa-screwdriver-wrench';
+  if (c.includes('sec') || c.includes('fraud')) return 'fa-shield-halved';
+  if (c.includes('device') || c.includes('phone') || c.includes('handset')) return 'fa-mobile-screen';
+  return 'fa-tags';
+}
+
 function getFilteredTickets(activeOnly = false) {
   let filtered = activeOnly
     ? tickets.filter(t => t.status === 'ESCALATED' || t.status === 'OPEN')
     : [...tickets];
 
-  if (currentEscalationFilter === 'low-confidence') {
-    filtered = filtered.filter(t => t.riskScore < 85 || JSON.stringify(t.whyEscalated || []).toLowerCase().includes('confidence'));
-  } else if (currentEscalationFilter === 'repeat') {
-    filtered = filtered.filter(t => JSON.stringify(t.whyEscalated || []).toLowerCase().includes('repeat'));
-  } else if (currentEscalationFilter === 'high-risk') {
-    filtered = filtered.filter(t => Number(t.riskScore) >= 90);
+  if (currentEscalationFilter === 'escalated') {
+    filtered = filtered.filter(t => t.status === 'ESCALATED' || t.status === 'OPEN');
+  } else if (currentEscalationFilter === 'resolved') {
+    filtered = filtered.filter(t => t.status === 'RESOLVED');
   }
 
   if (currentSearchQuery) {
@@ -338,7 +382,7 @@ function renderDashboardTable() {
     const riskMeter = getRiskMeterHtml(t.riskScore);
     const firstReason = (t.whyEscalated && t.whyEscalated[0]) ? t.whyEscalated[0] : 'Low AI Confidence';
     const customerName = t.customer || t.customerEmail || 'Customer Submission';
-    const categoryName = t.category || t.predictedCategory || 'General';
+    const categoryName = formatCategoryName(t.category || t.predictedCategory);
 
     tr.innerHTML = `
       <td><span class="ticket-id">${escapeHtml(t.id)}</span></td>
@@ -383,7 +427,7 @@ function renderAllEscalatedTable() {
     const isResolved = t.status === 'RESOLVED';
     const customerName = t.customer || t.customerEmail || 'Customer Submission';
     const accountId = t.accountId || (t.id ? `#ACC-${t.id.replace(/\D/g, '').slice(-5) || '10293'}` : '#ACC-10293');
-    const categoryName = t.category || t.predictedCategory || 'General';
+    const categoryName = formatCategoryName(t.category || t.predictedCategory);
     const reasonText = (t.whyEscalated && t.whyEscalated[0]) ? t.whyEscalated[0] : (t.escalationReason || 'Automated Escalation');
 
     tr.innerHTML = `
@@ -420,7 +464,8 @@ function openTicketDetail(ticketId) {
 
   activeTicketId = ticket.id;
   document.getElementById('drawer-ticket-id').innerText = ticket.id;
-  document.getElementById('drawer-issue-title').innerText = ticket.issueSummary || ticket.complaintText || 'Escalated Complaint';
+  const issueTitleEl = document.getElementById('drawer-issue-title');
+  if (issueTitleEl) issueTitleEl.innerText = ticket.issueSummary || ticket.complaintText || 'Escalated Complaint';
   document.getElementById('drawer-customer-name').innerText = ticket.customer || ticket.customerEmail || 'Customer Submission';
   document.getElementById('drawer-customer-email').innerText = ticket.customerEmail || 'Not provided';
   document.getElementById('drawer-complaint-text').innerText = ticket.complaintText || 'No complaint text provided.';
@@ -457,6 +502,7 @@ function setupEventListeners() {
       btn.classList.add('active');
       const tabId = btn.getAttribute('data-tab');
       currentTab = tabId;
+      sessionStorage.setItem('signalcx_active_tab', tabId);
       const targetTab = document.getElementById(`tab-${tabId}`);
       if (targetTab) targetTab.classList.add('active');
 
@@ -471,6 +517,23 @@ function setupEventListeners() {
       }
     });
   });
+
+  // Top Header Refresh Button
+  const topRefreshBtn = document.getElementById('refresh-btn');
+  if (topRefreshBtn) {
+    topRefreshBtn.addEventListener('click', () => {
+      showToast('Refreshing queue...', 'info');
+      fetchTicketsFromBackend();
+      fetchNegativeFeedback();
+    });
+  }
+
+  // Restore active tab after refresh
+  const savedTab = sessionStorage.getItem('signalcx_active_tab');
+  if (savedTab) {
+    const savedBtn = document.querySelector(`.nav-btn[data-tab="${savedTab}"]`);
+    if (savedBtn) savedBtn.click();
+  }
 
   // Drawer Close Button & Overlay
   document.getElementById('close-drawer-btn').addEventListener('click', closeTicketDrawer);
@@ -628,7 +691,7 @@ function renderNegativeFeedbackTable() {
   tbody.innerHTML = '';
 
   if (negativeFeedbackItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-muted);">No negative feedback items pending. All resolutions accepted by customers!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--text-muted);">No negative feedback items pending. All resolutions accepted by customers!</td></tr>`;
     return;
   }
 
@@ -637,28 +700,21 @@ function renderNegativeFeedbackTable() {
     tr.style.cursor = 'pointer';
     tr.onclick = () => openNegativeFeedbackDetail(item.feedback_id);
 
-    const categoryText = item.category || 'General';
-    const complaintPreview = item.complaint && item.complaint.length > 50
-      ? item.complaint.substring(0, 50) + '...'
+    const complaintText = item.complaint && item.complaint.length > 70
+      ? item.complaint.substring(0, 70) + '...'
       : (item.complaint || 'N/A');
-    const solutionPreview = item.ai_solution && item.ai_solution.length > 50
-      ? item.ai_solution.substring(0, 50) + '...'
+    const solutionText = item.ai_solution && item.ai_solution.length > 70
+      ? item.ai_solution.substring(0, 70) + '...'
       : (item.ai_solution || 'N/A');
-    const feedbackPreview = item.feedback && item.feedback.length > 50
-      ? item.feedback.substring(0, 50) + '...'
+    const feedbackText = item.feedback && item.feedback.length > 70
+      ? item.feedback.substring(0, 70) + '...'
       : (item.feedback || 'N/A');
-
-    const submittedDate = item.submitted_at
-      ? new Date(item.submitted_at).toLocaleString()
-      : 'Unknown';
 
     tr.innerHTML = `
       <td><span class="ticket-id">${escapeHtml(item.feedback_id)}</span></td>
-      <td><span class="category-badge"><i class="fa-solid ${getCategoryIcon(categoryText)}"></i> ${escapeHtml(categoryText)}</span></td>
-      <td><span class="reason-pill" title="${escapeHtml(item.complaint)}">${escapeHtml(complaintPreview)}</span></td>
-      <td><span class="reason-pill" title="${escapeHtml(item.ai_solution)}">${escapeHtml(solutionPreview)}</span></td>
-      <td><span class="reason-pill" style="color: #f87171;" title="${escapeHtml(item.feedback)}">${escapeHtml(feedbackPreview)}</span></td>
-      <td><span class="badge badge-subtle"><i class="fa-solid fa-clock"></i> ${escapeHtml(submittedDate)}</span></td>
+      <td><span class="reason-pill" title="${escapeHtml(item.complaint)}">${escapeHtml(complaintText)}</span></td>
+      <td><span class="reason-pill" title="${escapeHtml(item.ai_solution)}">${escapeHtml(solutionText)}</span></td>
+      <td><span class="reason-pill" style="color: #f87171;" title="${escapeHtml(item.feedback)}">${escapeHtml(feedbackText)}</span></td>
       <td>
         <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openNegativeFeedbackDetail('${escapeHtml(item.feedback_id)}')">
           <i class="fa-solid fa-wrench"></i> Review & Resolve

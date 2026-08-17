@@ -154,16 +154,14 @@ class ResolveTicketRequest(BaseModel):
 
 class SimpleQueryRequest(BaseModel):
     complaint: str
+
+
 # Escalation Detection Helper
-<<<<<<< HEAD
 def check_escalation(
     complaint_text: str,
     solution_text: str,
     sources: Optional[List[Dict[str, Any]]] = None,
 ) -> tuple[bool, Optional[str]]:
-=======
-def check_escalation(complaint_text: str, solution_text: str) -> tuple[bool, Optional[str]]:
->>>>>>> main
     """
     Check if ticket requires escalation based on:
     1. Direct LLM decision in solution output (e.g., 'Escalation: Yes')
@@ -218,11 +216,6 @@ def generate_ticket_id() -> str:
     today = datetime.now().strftime("%Y%m%d")
     suffix = str(uuid.uuid4().int)[:6]
     return f"TCK-{today}-{suffix}"
-<<<<<<< HEAD
-
-
-=======
->>>>>>> main
 # API Routes
 @app.get("/health")
 async def health():
@@ -273,7 +266,11 @@ async def process_complaint(request: ComplaintRequest):
     is_found = bool(res.get("found", True))
     complaint_id = res.get("complaint_id") or str(uuid.uuid4())
     solution = res.get("solution", "")
-    category = res.get("category", "General")
+    category = res.get("category")
+    if not category or category == "General":
+        from retriever import classify_category, normalize_category
+        ranked = classify_category(complaint_text)
+        category = normalize_category(ranked[0][0]) if ranked else "Broadband / Internet"
     subcategory = res.get("subcategory", "General")
     source = res.get("source", "llm_kb")
 
@@ -387,37 +384,6 @@ async def submit_negative_feedback(req: NegativeFeedbackRequest):
     # Persist to database (AWS RDS MySQL / SQLite)
     db_save_negative_feedback(item)
 
-    # Also register as an open escalated ticket in DB for admin dashboard
-    neg_ticket = {
-        "id": feedback_id,
-        "complaintId": req.complaint_id,
-        "customer": "Customer Escalation (Unresolved AI)",
-        "accountId": f"#ACC-{str(uuid.uuid4().int)[:5]}",
-        "tier": "Residential / Business",
-        "location": "Regional Subscriber Node",
-        "customerEmail": req.email.strip(),
-        "category": req.category or "General",
-        "subcategory": req.subcategory or "General",
-        "issueSummary": f"Customer rejected AI solution: {req.feedback[:60]}...",
-        "priority": "HIGH",
-        "riskScore": 95,
-        "aging": "Just now",
-        "status": "OPEN",
-        "assignedTo": "Level-3 Network Operations",
-        "complaintText": req.complaint,
-        "sentiment": "Negative Customer Feedback",
-        "whyEscalated": [f"Customer Feedback: {req.feedback}"],
-        "aiSummary": f"Initial AI diagnosis failed. Category: {req.category}",
-        "aiRecommendation": req.ai_solution,
-        "ragSources": ["Customer Reported Failure"],
-        "timeline": [
-            {"time": datetime.now().strftime("%I:%M %p"), "event": "Negative feedback logged and routed to Level-3"}
-        ],
-        "notes": []
-    }
-    db_save_escalated_ticket(neg_ticket)
-    ESCALATED_TICKETS.append(neg_ticket)
-
     # Persist to disk fallback
     filepath = RESOLVER_PENDING / f"{feedback_id}.json"
     filepath.write_text(json.dumps(item, indent=2), encoding="utf-8")
@@ -431,10 +397,7 @@ async def submit_negative_feedback(req: NegativeFeedbackRequest):
 async def get_negative_feedback():
     """Return all pending negative feedback items from the database."""
     db_pending = db_get_negative_feedback(status="pending")
-    if db_pending:
-        return {"items": db_pending, "count": len(db_pending)}
-    pending = [item for item in NEGATIVE_FEEDBACK_ITEMS if item.get("status") == "pending"]
-    return {"items": pending, "count": len(pending)}
+    return {"items": db_pending or [], "count": len(db_pending or [])}
 
 
 @app.post("/api/admin/resolve-feedback")
@@ -522,9 +485,7 @@ def resolve_feedback(req: ResolveFeedbackRequest):
 async def get_admin_tickets():
     """Return all real escalated tickets from the database."""
     db_tickets = db_get_escalated_tickets()
-    if db_tickets:
-        return {"tickets": db_tickets}
-    return {"tickets": ESCALATED_TICKETS}
+    return {"tickets": db_tickets or []}
 
 
 @app.post("/api/admin/resolve-ticket")
