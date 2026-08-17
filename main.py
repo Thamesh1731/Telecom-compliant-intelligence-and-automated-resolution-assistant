@@ -155,11 +155,15 @@ class ResolveTicketRequest(BaseModel):
 class SimpleQueryRequest(BaseModel):
     complaint: str
 # Escalation Detection Helper
+<<<<<<< HEAD
 def check_escalation(
     complaint_text: str,
     solution_text: str,
     sources: Optional[List[Dict[str, Any]]] = None,
 ) -> tuple[bool, Optional[str]]:
+=======
+def check_escalation(complaint_text: str, solution_text: str) -> tuple[bool, Optional[str]]:
+>>>>>>> main
     """
     Check if ticket requires escalation based on:
     1. Direct LLM decision in solution output (e.g., 'Escalation: Yes')
@@ -214,8 +218,11 @@ def generate_ticket_id() -> str:
     today = datetime.now().strftime("%Y%m%d")
     suffix = str(uuid.uuid4().int)[:6]
     return f"TCK-{today}-{suffix}"
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> main
 # API Routes
 @app.get("/health")
 async def health():
