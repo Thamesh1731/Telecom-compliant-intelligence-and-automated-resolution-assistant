@@ -155,7 +155,11 @@ class ResolveTicketRequest(BaseModel):
 class SimpleQueryRequest(BaseModel):
     complaint: str
 # Escalation Detection Helper
-def check_escalation(complaint_text: str, solution_text: str) -> tuple[bool, Optional[str]]:
+def check_escalation(
+    complaint_text: str,
+    solution_text: str,
+    sources: Optional[List[Dict[str, Any]]] = None,
+) -> tuple[bool, Optional[str]]:
     """
     Check if ticket requires escalation based on:
     1. Direct LLM decision in solution output (e.g., 'Escalation: Yes')
@@ -169,8 +173,25 @@ def check_escalation(complaint_text: str, solution_text: str) -> tuple[bool, Opt
         reason = reason_match.group(1).strip() if reason_match else "LLM RAG Pipeline requested escalation"
         return True, f"AI Policy Triggered: {reason}"
 
-    # 2. Check customer complaint_text ONLY for explicit escalation keywords
+    # 2. Apply source-backed escalation rules. The LLM must see these rules,
+    # but the backend also enforces obvious conditions if the LLM says No.
     complaint_lower = complaint_text.lower()
+    escalation_evidence = (
+        r"\b(city[- ]wide|area[- ]wide|large geographic|network outage|"
+        r"confirmed outage|outage cluster|multiple customers|multiple devices|"
+        r"all devices|everyone)\b|"
+        r"\b(unresolved|still|persists|continues|after (?:standard troubleshooting|"
+        r"troubleshooting|restart|restarting)|completely unresponsive|"
+        r"repeatedly crashes|physical damage|liquid exposure|network[- ]side|"
+        r"requires (?:human|technician|engineering))\b"
+    )
+    if sources and re.search(escalation_evidence, complaint_lower):
+        for source in sources:
+            source_text = str(source.get("text", ""))
+            if re.search(r"(?i)^##\s*(?:Escalation|Escalation Conditions|When Human Escalation Is Required)", source_text, re.MULTILINE):
+                return True, "AI Policy Triggered: Retrieved source requires technician or support review for this condition."
+
+    # 3. Check customer complaint_text for explicit escalation keywords
     triggers = [
         "escalate", "supervisor", "priority escalation",
         "human agent", "level 2", "senior technician",
@@ -193,6 +214,8 @@ def generate_ticket_id() -> str:
     today = datetime.now().strftime("%Y%m%d")
     suffix = str(uuid.uuid4().int)[:6]
     return f"TCK-{today}-{suffix}"
+
+
 # API Routes
 @app.get("/health")
 async def health():
@@ -229,18 +252,36 @@ async def process_complaint(request: ComplaintRequest):
         raise HTTPException(status_code=500, detail="Complaint processing failed.")
     res = queued_job.get("result")
     if not res:
-        raise HTTPException(status_code=500, detail="Complaint processing returned no result.")
-    if not res or not res.get("found"):
-        raise HTTPException(status_code=404, detail="No matching knowledge found for this complaint.")
+        from llm_reasoning import fallback_generate_solution
+        res = {
+            "complaint_id": str(uuid.uuid4()),
+            "found": False,
+            "source": "escalation",
+            "category": "General",
+            "subcategory": "General",
+            "matches": [],
+            "solution": fallback_generate_solution(complaint_text, []),
+        }
 
+    is_found = bool(res.get("found", True))
     complaint_id = res.get("complaint_id") or str(uuid.uuid4())
     solution = res.get("solution", "")
     category = res.get("category", "General")
     subcategory = res.get("subcategory", "General")
     source = res.get("source", "llm_kb")
 
-    # Check for escalation triggers (comparing complaint text and solution logic accurately)
-    escalation_required, escalation_reason = check_escalation(complaint_text, solution)
+    if not is_found or not solution:
+        from llm_reasoning import fallback_generate_solution
+        solution = solution or fallback_generate_solution(complaint_text, [])
+        escalation_required = True
+        escalation_reason = "No matching knowledge base documentation found for this complaint - automatically escalated to support technician."
+    else:
+        # Check both the LLM decision and the retrieved source-backed policy.
+        escalation_required, escalation_reason = check_escalation(
+            complaint_text,
+            solution,
+            res.get("matches", []),
+        )
 
     ticket_id = generate_ticket_id()
 
@@ -294,7 +335,7 @@ async def process_complaint(request: ComplaintRequest):
         "success": True,
         "complaint_id": complaint_id,
         "ticketId": ticket_id,
-        "found": True,
+        "found": is_found,
         "source": source,
         "category": category,
         "subcategory": subcategory,
@@ -302,11 +343,18 @@ async def process_complaint(request: ComplaintRequest):
         "resolution": solution,
         "escalationRequired": escalation_required,
         "escalationReason": escalation_reason,
+        "customerMessage": (
+            "Your request has been forwarded to our technician. "
+            "The technician will contact you soon. Thank you for your patience."
+            if escalation_required else None
+        ),
         "matches": res.get("matches", []),
         "status": ticket_data["status"],
         "priority": priority_result.get("priority"),
         "urgency": priority_result.get("urgency"),
     }
+
+
 # Negative Feedback Pipeline
 @app.post("/api/negative-feedback")
 async def submit_negative_feedback(req: NegativeFeedbackRequest):

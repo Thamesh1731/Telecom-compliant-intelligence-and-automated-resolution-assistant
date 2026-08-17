@@ -11,7 +11,7 @@ COLLECTION_NAME = "telecom_knowledge_base"
 
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
-CANDIDATE_K = 25
+CANDIDATE_K = 50
 TOP_K = 5
 
 # Document Scoring Weights (Level 1)
@@ -41,6 +41,14 @@ print("Loading category classifier...")
 
 classifier_path = Path(__file__).parent / "complaint_classifier_final.joblib"
 classifier = joblib.load(classifier_path)
+
+# Models saved with scikit-learn 1.9 may omit ``multi_class`` from the
+# LogisticRegression state. Python 3.10 deployments currently use the
+# compatible 1.7 runtime, whose predict_proba still reads that attribute.
+# Restore the default value when loading such an artifact.
+classifier_estimator = getattr(classifier, "steps", [])[-1][1] if getattr(classifier, "steps", []) else classifier
+if hasattr(classifier_estimator, "predict_proba") and not hasattr(classifier_estimator, "multi_class"):
+    classifier_estimator.multi_class = "auto"
 # CONNECT TO CHROMADB
 client = chromadb.PersistentClient(
     path=DB_PATH
@@ -77,6 +85,42 @@ def classify_category(query):
         key=lambda x: x[1],
         reverse=True
     )
+
+    # The classifier is useful for broad language, but some complaint types
+    # have unambiguous signals that must not be confused with nearby classes.
+    # Apply only high-precision overrides, then retain the model ranking for
+    # all other complaints.
+    text = query.lower()
+    override = None
+    if re.search(
+        r"\b(fraud|phishing|scam|suspicious activity|unauthorized|hacked|stolen|lost)\b|"
+        r"\bsim\s*swap\b|\bsomeone\s+(changed|accessed)\b",
+        text,
+    ):
+        override = "Security / Fraud"
+    elif re.search(r"\b(phone|mobile phone|handset|smartphone|device)\b", text) and re.search(
+        r"\b(not working|won't turn on|will not turn on|doesn't turn on|does not turn on|"
+        r"frozen|unresponsive|stopped working|keeps restarting|keeps crashing|not powering)\b",
+        text,
+    ):
+        override = "Device / Handset"
+    elif re.search(r"\b(sim|esim|mobile service|mobile data)\b", text) and re.search(
+        r"\b(not working|not detected|unavailable|failed|failure|problem|cannot|can't|can't connect|"
+        r"not active|not sending|not receiving|replace|activate)\b",
+        text,
+    ):
+        override = "SIM / Mobile Service"
+    elif re.search(r"\b(city[- ]wide|nationwide|area[- ]wide|network)\s+(outage|down)\b|\b(outage|service disruption)\b", text):
+        override = "Network / Outage"
+    elif re.search(r"\b(account|sign[- ]?in|login|password|username)\b", text) and re.search(
+        r"\b(access|locked|rejected|forgot|not working|can't|cannot|unable)\b", text
+    ):
+        override = "Account / Subscription"
+
+    if override and override in classes:
+        ranked = [(override, 1.0)] + [
+            (label, float(probability)) for label, probability in ranked if label != override
+        ]
 
     return ranked
 # CALLING INTENT DETECTION
@@ -665,25 +709,31 @@ def retrieve(
 
     # Sort documents by relevance score
     doc_scores.sort(key=lambda x: x["score"], reverse=True)
-    # LEVEL 2: AMBIGUITY / CONFIDENCE DETECTION
+    # LEVEL 2: retain every strongly relevant document for the LLM context.
+    # Previously only one document was kept unless the top two were nearly
+    # tied, which could discard useful resolution or escalation guidance.
     is_ambiguous = False
     selected_docs = []
 
     if doc_scores:
-        selected_docs.append(doc_scores[0])
-        print(f"\nTop Document: {doc_scores[0]['document_id']} ({doc_scores[0]['document_title']}) - Score: {doc_scores[0]['score']:.4f}")
-
-        if len(doc_scores) > 1:
-            score_diff = doc_scores[0]["score"] - doc_scores[1]["score"]
-            print(f"Second Document: {doc_scores[1]['document_id']} ({doc_scores[1]['document_title']}) - Score: {doc_scores[1]['score']:.4f} (Diff: {score_diff:.4f})")
-
-            # Ambiguous if difference is within threshold and scores are reasonably high
-            if score_diff <= AMBIGUITY_THRESHOLD and doc_scores[0]["score"] >= 0.35:
-                is_ambiguous = True
-                selected_docs.append(doc_scores[1])
-                print("Retrieval status: AMBIGUOUS (confidence is divided between top documents).")
-            else:
-                print("Retrieval status: CONFIDENT (clear primary document identified).")
+        top_score = doc_scores[0]["score"]
+        score_floor = max(0.35, top_score - 0.12)
+        selected_docs = [
+            doc for doc in doc_scores if doc["score"] >= score_floor
+        ][:max(1, top_k)]
+        is_ambiguous = len(selected_docs) > 1 and (
+            top_score - selected_docs[1]["score"] <= AMBIGUITY_THRESHOLD
+        )
+        print(
+            f"\nSelected {len(selected_docs)} relevant document(s) "
+            f"with score floor {score_floor:.4f}."
+        )
+        for selected_doc in selected_docs:
+            print(
+                f"- {selected_doc['document_id']} "
+                f"({selected_doc['document_title']}) "
+                f"{selected_doc['score']:.4f}"
+            )
     else:
         print("\nNo documents ranked.")
         return []

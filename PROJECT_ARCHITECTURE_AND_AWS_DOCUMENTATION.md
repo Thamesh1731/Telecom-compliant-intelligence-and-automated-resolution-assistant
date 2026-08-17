@@ -9,7 +9,7 @@ The **Telecom-Compliant Intelligence and Automated Resolution Assistant (SignalC
 
 The system leverages:
 * **Hybrid Deep Learning & Transformers** (Fine-tuned DeBERTa-v2 for Severity, DistilBERT for Urgency, Scikit-learn Classifiers for Category Mapping).
-* **RAG Engine (Retrieval-Augmented Generation)**: Vector embeddings via `SentenceTransformer` and ChromaDB vector store backed by Groq LPU (`llama-3.1-8b-instant`).
+* **RAG Engine (Retrieval-Augmented Generation)**: Vector embeddings via `SentenceTransformer` and ChromaDB vector store backed by Groq LPU (`openai/gpt-oss-20b`).
 * **Cloud-Native AWS Hosting**: Decoupled serverless frontend distribution (S3 + CloudFront), high-throughput FastAPI inference compute on Amazon EC2, managed AWS RDS MySQL for persistence, and S3 for model weight storage.
 * **Full-Duplex Email Resolution Service**: Automated technician resolution dispatch via SMTP.
 * **Widescreen Glassmorphic Frontend**: Built with React, Vite, Lucide Icons, and dynamic visual telemetry.
@@ -45,7 +45,7 @@ flowchart TD
     end
 
     subgraph External_APIs ["External Intelligence & Services"]
-        Groq[Groq LPU Cloud<br/>Model: llama-3.1-8b-instant]
+        Groq[Groq LPU Cloud<br/>Model: openai/gpt-oss-20b]
         Gmail[Google SMTP Service<br/>smtp.gmail.com:587]
     end
 

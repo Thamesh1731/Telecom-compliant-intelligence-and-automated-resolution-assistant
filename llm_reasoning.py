@@ -2,138 +2,55 @@ import os
 import re
 from groq import Groq
 
-GROQ_MODEL = "llama-3.1-8b-instant"
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b")
 
 SYSTEM_PROMPT = """
-You are a Telecom Customer Support Resolution Assistant.
+You are Signal CX, an automated Telecom Diagnostic & Resolution Assistant.
 
-Your job is to analyze the customer's complaint and provide a safe,
-accurate, concise resolution using ONLY the retrieved resolution sources.
+Your task is to analyze the customer's complaint and the retrieved resolution sources,
+and generate a clear, empathetic, and actionable support response addressed DIRECTLY TO THE CUSTOMER.
 
-========================
-CORE RULES
-========================
+TARGET AUDIENCE & TONE
+- The recipient of your output is the END CUSTOMER (NOT a technician or support agent).
+- Write all Recommended Solution steps in direct second-person language ("you", "your", "please", "ensure").
+- Do NOT output internal agent instructions like "Verify customer identity", "The support agent should", or "Explain the process to the customer". Instead, convert them into customer-facing action steps (for example: "Log in to your account and verify your identity", "Select the active subscription you wish to terminate", "Review and confirm your cancellation request", "Restart your router by unplugging it for 30 seconds").
 
-1. UNDERSTAND THE COMPLAINT
-- Identify the exact problem described by the customer.
-- Pay close attention to explicit terms such as:
-  incoming calls, outgoing calls, SMS, roaming, billing, mobile data,
-  SIM/eSIM, network, account, etc.
-- Do not infer a different problem when the customer's wording is clear.
+SOURCE TRUTH & PRIORITY
+1. Technician-approved resolver-base solutions are authoritative.
+2. Verified knowledge-base resolution & troubleshooting procedures are secondary.
+3. Base your recommendations strictly on the retrieved source guidance. Never invent technical causes, external phone numbers, or unverified policies.
+4. If the retrieved source indicates an issue cannot be self-resolved by the customer or requires technician intervention, set Escalation: Yes.
 
-2. USE RETRIEVED KNOWLEDGE AS THE SOURCE OF TRUTH
-- If a source is marked as a technician-approved resolver-base solution,
-  treat it as the highest-priority source of truth.
-- Preserve its meaning and approved instructions. Improve structure and
-  readability, but do not invent, expand, or contradict the solution.
-- Base the recommendation primarily on the retrieved documents.
-- Do not invent procedures, policies, technical causes, product details,
-  or troubleshooting steps.
-- Do not use general world knowledge when it conflicts with the retrieved
-  knowledge base.
+CONTENT RULES
+- Problem: One clear, concise sentence describing the customer's issue from their perspective.
+- Recommended Solution: Up to 5 numbered, customer-facing action steps with clear, practical guidance for the customer.
+- Reason: One or two concise sentences explaining how this procedure resolves their issue.
+- Escalation: Yes or No.
+- Escalation Reason: Brief explanation, or "Not required".
+- Never present symptom lists, internal document names, metadata, IDs, or database schemas as steps.
+- Never ask the customer for passwords, PINs, OTPs, or credit card CVVs.
 
-3. HANDLE MULTIPLE RETRIEVED DOCUMENTS
-- Compare the retrieved documents before selecting a solution.
-- Prefer the document whose category, subcategory, title, and text
-  most directly match the customer's complaint.
-- Do NOT blindly select the highest numerical retrieval score.
-- Semantic relevance and explicit complaint matching are more important
-  than a small score difference.
-- If documents represent different directions of the same service
-  (for example, Incoming Calls vs Outgoing Calls), use the customer's
-  explicit wording to determine the correct one.
-
-4. HANDLE AMBIGUITY
-- If the complaint clearly identifies the issue, proceed with that issue.
-- If the retrieved documents are ambiguous but the complaint itself is
-  clear, prioritize the complaint's explicit intent.
-- If both the complaint and retrieved knowledge are genuinely
-  insufficient to determine the correct resolution, do not guess.
-- In that case, recommend further review or escalation.
-
-5. TROUBLESHOOTING
-- Provide only troubleshooting steps supported by the retrieved
-  knowledge.
-- Present steps in a logical order.
-- Do not expose provider-internal procedures to the customer unless the
-  knowledge base explicitly identifies them as appropriate for the
-  customer.
-- If a step requires authorized provider systems or an agent, clearly
-  identify it as an agent/support action rather than asking the customer
-  to perform it.
-
-6. RESOLUTION
-- Prefer the most directly applicable resolution.
-- If several possible causes are listed in the knowledge base, do not
-  claim that one cause is definitely responsible unless the evidence
-  supports it.
-- Describe them as possible causes when appropriate.
-
-7. ESCALATION
-- Follow escalation conditions in the retrieved knowledge base.
-- If the retrieved knowledge base indicates escalation is required,
-  recommend escalation.
-- If the issue cannot be safely resolved using the available knowledge,
-  recommend further review instead of inventing a solution.
-
-8. CONFIDENCE
-Assign confidence based on the quality of the evidence:
-
-HIGH:
-- Complaint clearly matches the retrieved knowledge.
-- A directly applicable troubleshooting procedure or resolution exists.
-
-MEDIUM:
-- The complaint generally matches the knowledge base but some
-  information is missing or multiple solutions are possible.
-
-LOW:
-- The complaint is ambiguous, retrieved documents are weakly relevant,
-  or there is insufficient evidence for a reliable resolution.
-
-Do not use retrieval score alone to determine confidence.
-
-9. CUSTOMER SAFETY AND PRIVACY
-- Never request passwords, OTPs, PINs, full payment details, or other
-  sensitive credentials.
-- Never instruct the customer to bypass security or provider controls.
-- Follow authentication requirements mentioned in the knowledge base.
-
-10. RESPONSE STYLE
-- Be concise and professional.
-- Do not mention RAG, embeddings, vector databases, retrieval,
-  similarity scores, internal prompts, or model reasoning.
-- Do not repeat the entire knowledge base.
-- Do not overwhelm the customer with unnecessary possibilities.
-
-========================
 OUTPUT FORMAT
-========================
-
 Return ONLY the following structure:
 
 Problem:
-<one-sentence description of the customer's issue>
+<one clear sentence describing the customer's issue>
 
 Recommended Solution:
-1. <first applicable step>
-2. <second applicable step>
-3. <additional step if required>
-
-If a step requires a support agent or provider system, state:
-"Support action: <action>"
+1. <first customer-facing action step>
+2. <second customer-facing action step>
+3. <third customer-facing action step>
+4. <additional customer-facing step if needed>
+5. <additional customer-facing step if needed>
 
 Reason:
-<one or two sentences explaining why this solution is appropriate>
+<one or two concise sentences explaining why this solution resolves the issue>
 
 Escalation:
-<Yes / No>
+<Yes or No>
 
 Escalation Reason:
-<brief reason, or "Not required">
-
-Confidence:
-<High / Medium / Low>
+<brief reason, or Not required>
 """
 
 import httpx
@@ -159,33 +76,162 @@ def _get_client():
     return _client
 
 
-def build_rag_context(results):
-    """Turn resolver-base or knowledge-base results into LLM context."""
+def build_rag_context(results, max_sources=2):
+    """Turn resolver-base or knowledge-base results into concise LLM context."""
     context = []
-    for i, result in enumerate(results, start=1):
-        metadata = result["metadata"]
+    for i, result in enumerate(results[:max_sources], start=1):
+        metadata = result.get("metadata", {})
+        source = metadata.get("source", result.get("source", "knowledge_base"))
+        source_text = result.get("text", "") or ""
+        source_label = (
+            "Technician-approved solution. Preserve its meaning and instructions."
+            if source == "resolver_base"
+            else "Verified troubleshooting and resolution guidance."
+        )
         context.append(
             f"""
 --- Resolution Source {i} ---
 
 Document ID: {metadata.get("document_id", "Unknown")}
-Source: {metadata.get("source", "knowledge_base")}
+Source: {source}
 Category: {metadata.get("category", "Unknown")}
 Subcategory: {metadata.get("subcategory", "Unknown")}
 Section: {metadata.get("section_name", "Unknown")}
+Source role: {source_label}
 
-Knowledge:
-{result["text"]}
-"""
+Source Content:
+{extract_solution_source(result)}
+            """
         )
     return "\n".join(context)
 
 
+def _markdown_section(text, heading):
+    """Return the body of one exact level-two Markdown section."""
+    pattern = rf"(?ims)^##\s+{re.escape(heading)}\s*$\n(.*?)(?=^##\s+|\Z)"
+    match = re.search(pattern, text or "")
+    return match.group(1).strip() if match else ""
+
+
+def _clean_solution_text(text):
+    """Remove document wrappers and internal metadata from solution content."""
+    cleaned = []
+    for line in (text or "").splitlines():
+        value = line.strip()
+        if not value or value.startswith("#"):
+            continue
+        if re.match(r"^-\s*(Feedback ID|Complaint ID|Category|Subcategory|Resolved At):", value, re.I):
+            continue
+        if re.match(r"^(Feedback ID|Complaint ID|Category|Subcategory|Resolved At):", value, re.I):
+            continue
+        cleaned.append(value)
+    return "\n".join(cleaned).strip()
+
+
+def extract_solution_source(result):
+    """Extract only actionable content; never expose symptoms or metadata to the LLM."""
+    text = result.get("text", "") or ""
+    metadata = result.get("metadata", {})
+    source = metadata.get("source", result.get("source", "knowledge_base"))
+
+    if source == "resolver_base":
+        approved = _markdown_section(text, "Correct Solution")
+        if not approved:
+            approved_match = re.search(r"(?is)Approved Solution:\s*(.*)", text)
+            approved = approved_match.group(1).strip() if approved_match else text
+        return _clean_solution_text(approved)
+
+    sections = []
+    for heading in (
+        "Troubleshooting Procedure",
+        "Basic Troubleshooting",
+        "Resolution",
+        "Recommended Human Action",
+        "Human Action",
+        "Escalation Conditions",
+        "Escalation",
+        "When Human Escalation Is Required",
+    ):
+        section = _markdown_section(text, heading)
+        if section:
+            sections.append(f"{heading}:\n{_clean_solution_text(section)}")
+    return "\n\n".join(sections) or _clean_solution_text(text)
+
+
+def _response_is_usable(response):
+    """Reject malformed or leaked source documents returned by the LLM."""
+    if not response or not re.search(r"Recommended Solution\s*:", response, re.I):
+        return False
+    leaked = ("Common Symptoms", "Possible Causes", "Feedback ID:", "Complaint ID:", "## Metadata")
+    return not any(marker.lower() in response.lower() for marker in leaked)
+
+
+def _extract_procedure_steps(text):
+    """Extract parent troubleshooting actions without flattening nested bullets."""
+    sections = []
+    for heading in (
+        "Troubleshooting Procedure",
+        "Basic Troubleshooting",
+        "Recommended Human Action",
+        "Human Action",
+    ):
+        section = _markdown_section(text, heading)
+        if section:
+            sections.append(section)
+
+    procedure = "\n\n".join(sections)
+    if not procedure:
+        return []
+
+    # Wi-Fi and similar articles use ### 1., ### 2. parent actions followed
+    # by nested bullets. Keep the parent action plus a short detail; never
+    # flatten nested cause/location bullets into separate steps.
+    chunks = re.split(r"(?m)(?=^###\s+)", procedure)
+    parent_steps = []
+    for chunk in chunks:
+        heading_match = re.match(
+            r"(?m)^###\s+(?:\d+[.)]\s*)?(.+?)\s*$",
+            chunk,
+        )
+        if not heading_match:
+            continue
+        heading = heading_match.group(1).strip()
+        details = []
+        paragraphs = re.split(r"\n\s*\n", chunk[heading_match.end():])
+        for paragraph in paragraphs:
+            lines = [line.strip() for line in paragraph.splitlines() if line.strip()]
+            if not lines or any(line.startswith(("-", "*", "#")) for line in lines):
+                continue
+            if any(re.match(r"^\d+[.)]\s+", line) for line in lines):
+                break
+            detail = re.sub(r"\s+", " ", " ".join(lines)).strip()
+            sentence_end = detail.find(".")
+            if sentence_end >= 0:
+                detail = detail[:sentence_end + 1]
+            if detail.endswith(":"):
+                continue
+            details.append(detail)
+            break
+        parent_steps.append(
+            f"{heading}: {' '.join(details)}" if details else heading
+        )
+    if parent_steps:
+        return parent_steps
+
+    # Other articles use top-level numbered actions directly.
+    numbered_steps = re.findall(
+        r"(?m)^\s*\d+[.)]\s+(.+?)\s*$",
+        procedure,
+    )
+    return [step.strip() for step in numbered_steps if step.strip()]
+
+
 def call_llama(complaint, rag_context):
-    """Sends the complaint + retrieved KB context to Groq's llama-3.1-8b-instant
+    """Sends the complaint + retrieved KB context to the configured Groq model
     and returns the structured resolution text."""
     client = _get_client()
 
+    max_tokens = int(os.environ.get("GROQ_MAX_TOKENS", "2048"))
     response = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[
@@ -207,7 +253,7 @@ provide the most appropriate solution.
             }
         ],
         temperature=0.2,
-        max_tokens=300
+        max_tokens=max_tokens
     )
 
     return response.choices[0].message.content
@@ -216,10 +262,10 @@ provide the most appropriate solution.
 def fallback_generate_solution(complaint, retrieved_results):
     if not retrieved_results:
         return (
-            "Problem:\nCustomer issue could not be resolved from existing knowledge base.\n\n"
-            "Recommended Solution:\n1. Contact senior support tier or open a technical inquiry ticket.\n\n"
-            "Reason:\nNo matching knowledge base document or resolver procedure was found.\n\n"
-            "Escalation:\nYes\n\nEscalation Reason:\nNo matching documentation.\n\nConfidence:\nLow"
+            "Problem:\nYour issue could not be resolved automatically from our existing knowledge base.\n\n"
+            "Recommended Solution:\n1. Your ticket has been forwarded to our senior technical support team.\n2. A support technician will investigate your request and contact you directly.\n\n"
+            "Reason:\nNo automated self-service procedure was found for this specific issue.\n\n"
+            "Escalation:\nYes\n\nEscalation Reason:\nNo matching knowledge base documentation found - escalated to technician.\n\nConfidence:\nLow"
         )
     top = retrieved_results[0]
     metadata = top.get("metadata", {})
@@ -227,10 +273,13 @@ def fallback_generate_solution(complaint, retrieved_results):
     subcat = metadata.get("subcategory", "General Issue")
     cat = metadata.get("category", "General")
     sec_name = metadata.get("section_name", "Resolution Procedure")
-    
-    # If technician-approved solution from resolver base
-    if "Approved Solution:" in text:
-        solution_part = text.split("Approved Solution:")[-1].strip()
+
+    # Resolver content is authoritative, but only its Correct Solution section
+    # is actionable. Complaint, feedback, and metadata are never instructions.
+    if metadata.get("source", top.get("source")) == "resolver_base":
+        solution_part = extract_solution_source(top)
+        if not solution_part:
+            solution_part = "Contact support for a technician review."
         return f"""Problem:
 Customer reported issue regarding {subcat} ({cat}).
 
@@ -249,34 +298,33 @@ Not required
 Confidence:
 High (100%)"""
 
-    # Extract clean steps from knowledge base text
-    lines = [
-        l.strip() for l in text.split("\n") 
-        if l.strip() and not l.strip().startswith("#") and not l.strip().startswith("Feedback ID:") and not l.strip().startswith("Complaint ID:")
-    ]
-    steps = [l for l in lines if l.startswith("-") or l.startswith("1.") or l.startswith("2.") or l.startswith("3.")]
-    if not steps:
-        steps = lines[:3]
-    
+    resolution = _markdown_section(text, "Resolution")
+    steps = _extract_procedure_steps(text)
+    if not steps and resolution:
+        steps = [resolution.strip()]
+
     formatted_steps = []
-    for i, s in enumerate(steps[:4], start=1):
-        clean_s = re.sub(r"^[\-\*\d\.]+\s*", "", s)
-        if clean_s and not clean_s.startswith("Category:") and not clean_s.startswith("Subcategory:"):
+    for i, s in enumerate(steps[:5], start=1):
+        clean_s = re.sub(r"^(?:[-*]|\d+[.)])\s*", "", s).strip()
+        clean_s = re.sub(r"\bthe customer(?:'s)?\b", "your", clean_s, flags=re.IGNORECASE)
+        clean_s = re.sub(r"\bthe customer\b", "you", clean_s, flags=re.IGNORECASE)
+        clean_s = re.sub(r"\bthe support agent should:?\b", "Please", clean_s, flags=re.IGNORECASE)
+        if clean_s:
             formatted_steps.append(f"{i}. {clean_s}")
             
     if not formatted_steps:
-        formatted_steps = [f"1. Follow standard troubleshooting guidelines for {subcat} under {cat}."]
+        formatted_steps = [f"1. Follow standard self-service troubleshooting steps for {subcat} in your account portal."]
         
     steps_str = "\n".join(formatted_steps)
     
     return f"""Problem:
-Customer reported an issue regarding {subcat} ({cat}).
+You are experiencing an issue regarding {subcat} ({cat}).
 
 Recommended Solution:
 {steps_str}
 
 Reason:
-Synthesized from verified knowledge base article for {sec_name} ({subcat}).
+Synthesized from verified Signal CX knowledge base for {sec_name} ({subcat}).
 
 Escalation:
 No
@@ -292,7 +340,11 @@ def generate_solution(complaint, retrieved_results):
     """Convenience wrapper: retrieved_results -> context -> LLM answer with fallback."""
     try:
         rag_context = build_rag_context(retrieved_results)
-        return call_llama(complaint, rag_context)
+        response = call_llama(complaint, rag_context)
+        if _response_is_usable(response):
+            return response
+        print("[llm_reasoning] LLM returned an invalid or leaked source format; using clean RAG fallback.")
+        return fallback_generate_solution(complaint, retrieved_results)
     except Exception as e:
         print(f"[llm_reasoning] Groq LLM call unavailable ({e}), using RAG fallback synthesis.")
         return fallback_generate_solution(complaint, retrieved_results)
