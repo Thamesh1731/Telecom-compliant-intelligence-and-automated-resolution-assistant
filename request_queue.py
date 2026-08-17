@@ -1,14 +1,4 @@
-"""Priority request queues for complaint processing.
-
-The API classifies and enqueues a complaint quickly. A single background
-worker drains the queues in Critical -> High -> Medium -> Low order, carrying
-unused capacity down to the next queue before invoking the existing resolver,
-RAG, and LLM pipeline.
-
-This is an in-process queue for local development and a single AWS task. For
-multi-instance AWS deployment, replace this backend with SQS/DynamoDB while
-keeping the same scheduler contract.
-"""
+"""In-process priority queues for complaint processing."""
 
 import os
 import sys
@@ -19,7 +9,7 @@ from typing import Callable, Dict, Any
 
 
 PROJECT_ROOT = Path(__file__).parent
-PRIORITY_PACKAGE = PROJECT_ROOT / "priority" / "priority"
+PRIORITY_PACKAGE = PROJECT_ROOT / "priority1"
 if str(PRIORITY_PACKAGE) not in sys.path:
     sys.path.insert(0, str(PRIORITY_PACKAGE))
 
@@ -32,12 +22,15 @@ QUEUE_ALLOCATION = {"critical": 0.40, "high": 0.30, "medium": 0.20, "low": 0.10}
 
 def classify_request(complaint: str) -> Dict[str, Any]:
     """Run the supplied sentiment/urgency priority model for one complaint."""
-    from priority_engine import process_complaint
+    from priority_model import process_complaint
 
     result = process_complaint(complaint, status="Open")
     urgency = str(result.get("urgency", "NEUTRAL")).upper()
     priority = str(result.get("priority", "P3")).upper()
-    queue_name = URGENCY_TO_QUEUE.get(urgency) or PRIORITY_TO_QUEUE.get(priority, "medium")
+    # The new model combines urgency and severity into the final P1-P4
+    # decision. Queue selection must follow that final priority, not urgency
+    # alone; otherwise a severe complaint could enter a lower queue.
+    queue_name = PRIORITY_TO_QUEUE.get(priority) or URGENCY_TO_QUEUE.get(urgency, "medium")
     return {**result, "urgency": urgency, "queue": queue_name}
 
 

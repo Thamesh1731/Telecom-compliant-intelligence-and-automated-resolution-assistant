@@ -7,12 +7,7 @@ from transformers import (
 )
 
 from urgency_rules_v2 import calculate_rule_urgency
-
-
-# ============================================================
 # LOAD DISTILBERT MODEL
-# ============================================================
-
 MODEL_NAME = "naman9705/signal-cx-urgency-distilbert"
 
 print("Loading DistilBERT urgency model...")
@@ -32,12 +27,7 @@ DEVICE = torch.device(
 )
 
 model.to(DEVICE)
-
-
-# ============================================================
 # LABEL MAPPING
-# ============================================================
-
 # Your trained model uses these labels:
 # 0 = LOW
 # 1 = MEDIUM
@@ -50,12 +40,7 @@ LABELS = {
     2: "HIGH",
     3: "CRITICAL"
 }
-
-
-# ============================================================
 # ML URGENCY SCORE
-# ============================================================
-
 def calculate_ml_urgency(
     low_probability,
     medium_probability,
@@ -83,12 +68,7 @@ def calculate_ml_urgency(
         -1.0,
         min(1.0, score)
     )
-
-
-# ============================================================
 # FINAL DESCRIPTION
-# ============================================================
-
 def get_final_description(
     score,
     emergency=False
@@ -108,12 +88,7 @@ def get_final_description(
 
     else:
         return "CRITICAL"
-
-
-# ============================================================
 # DISTILBERT PREDICTION
-# ============================================================
-
 def predict_ml_urgency(complaint):
 
     inputs = tokenizer(
@@ -174,21 +149,12 @@ def predict_ml_urgency(complaint):
         ml_prediction,
         probability_map
     )
-
-
-# ============================================================
 # HYBRID PREDICTION
-# ============================================================
-
 def predict_urgency(
     complaint,
     status="Open"
 ):
-
-    # --------------------------------------------------------
     # RULE ENGINE V2
-    # --------------------------------------------------------
-
     rule_result = calculate_rule_urgency(
         complaint,
         status
@@ -201,12 +167,7 @@ def predict_urgency(
     signals = rule_result[
         "signals"
     ]
-
-
-    # --------------------------------------------------------
     # DISTILBERT ML MODEL
-    # --------------------------------------------------------
-
     ml_prediction, probability_map = (
         predict_ml_urgency(
             complaint
@@ -233,24 +194,14 @@ def predict_urgency(
         "CRITICAL",
         0.0
     )
-
-
-    # --------------------------------------------------------
     # ML SCORE
-    # --------------------------------------------------------
-
     ml_urgency = calculate_ml_urgency(
         low_probability,
         medium_probability,
         high_probability,
         critical_probability
     )
-
-
-    # --------------------------------------------------------
     # HYBRID SCORE
-    # --------------------------------------------------------
-
     # Emergency always overrides everything.
 
     if signals.get(
@@ -270,12 +221,7 @@ def predict_urgency(
             +
             (rule_urgency * 0.40)
         )
-
-
-    # --------------------------------------------------------
     # LIMIT SCORE
-    # --------------------------------------------------------
-
     hybrid_urgency = max(
         -1.0,
         min(
@@ -283,12 +229,7 @@ def predict_urgency(
             hybrid_urgency
         )
     )
-
-
-    # --------------------------------------------------------
     # FINAL DESCRIPTION
-    # --------------------------------------------------------
-
     description = get_final_description(
         hybrid_urgency,
         emergency=(
@@ -298,12 +239,7 @@ def predict_urgency(
             ) == 1
         )
     )
-
-
-    # --------------------------------------------------------
     # RETURN RESULT
-    # --------------------------------------------------------
-
     return {
 
         "rule_urgency": round(
@@ -350,12 +286,7 @@ def predict_urgency(
 
         "signals": signals
     }
-
-
-# ============================================================
 # DIRECT TEST
-# ============================================================
-
 if __name__ == "__main__":
 
     print(
