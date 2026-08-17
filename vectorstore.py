@@ -3,31 +3,16 @@ from chunker import create_chunks
 
 import chromadb
 from sentence_transformers import SentenceTransformer
-
-
-# -----------------------------
 # Configuration
-# -----------------------------
-
 DB_PATH = "chroma_db"
 COLLECTION_NAME = "telecom_knowledge_base"
 
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-
-
-# -----------------------------
 # Load embedding model
-# -----------------------------
-
 print("Loading embedding model...")
 
 model = SentenceTransformer(EMBEDDING_MODEL)
-
-
-# -----------------------------
 # Create ChromaDB
-# -----------------------------
-
 client = chromadb.PersistentClient(
     path=DB_PATH
 )
@@ -42,32 +27,17 @@ except Exception as e:
 collection = client.get_or_create_collection(
     name=COLLECTION_NAME
 )
-
-
-# -----------------------------
 # Load documents
-# -----------------------------
-
 print("Loading knowledge base...")
 
 documents = load_documents()
 
 print(f"Documents loaded: {len(documents)}")
-
-
-# -----------------------------
 # Create chunks
-# -----------------------------
-
 chunks = create_chunks(documents)
 
 print(f"Chunks created: {len(chunks)}")
-
-
-# -----------------------------
 # Prepare data
-# -----------------------------
-
 texts = []
 ids = []
 metadatas = []
@@ -88,24 +58,14 @@ for chunk in chunks:
     )
 
     metadatas.append(metadata)
-
-
-# -----------------------------
 # Generate embeddings
-# -----------------------------
-
 print("Generating embeddings...")
 
 embeddings = model.encode(
     texts,
     show_progress_bar=True
 ).tolist()
-
-
-# -----------------------------
 # Store in ChromaDB
-# -----------------------------
-
 print("Storing embeddings...")
 
 collection.upsert(
@@ -114,12 +74,7 @@ collection.upsert(
     metadatas=metadatas,
     embeddings=embeddings
 )
-
-
-# -----------------------------
 # Result
-# -----------------------------
-
 print("\nVector database created successfully.")
 
 print(f"Collection: {COLLECTION_NAME}")

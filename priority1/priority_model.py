@@ -1,40 +1,4 @@
-"""
-priority_model.py
-=================
-Telecom complaint priority model.
-
-Combines the existing urgency model (urgency_engine_v2.py) and severity model
-(DeBERTa-v2 fine-tuned transformer at severity_outputs/severity_transformer/)
-to output a single priority level: P1, P2, P3, or P4.
-
-Public API
-----------
-    process_complaint(complaint, status="Open") -> dict
-
-Priority levels
----------------
-    P1 = Critical
-    P2 = High
-    P3 = Medium
-    P4 = Low
-
-Decision logic
---------------
-1.  If urgency is CRITICAL or severity is CRITICAL, return P1 immediately.
-2.  Compute combined_score = (0.60 x severity_score) + (0.40 x urgency_score)
-    where both scores are normalised to [0.0, 1.0].
-3.  Map combined_score to a priority via fixed thresholds.
-4.  Take the *highest* priority (lowest P number) from:
-        (a) score-derived priority
-        (b) urgency label-based priority
-        (c) severity label-based priority
-5.  Return the final priority, which is always in {P1, P2, P3, P4}.
-
-Models used
------------
-Urgency  : naman9705/signal-cx-urgency-distilbert  (via urgency_engine_v2.py)
-Severity : severity_outputs/severity_transformer/  (DeBERTa-v2 local checkpoint)
-"""
+"""Combine urgency and severity models into a P1-P4 complaint priority."""
 
 from __future__ import annotations
 
@@ -43,10 +7,8 @@ import sys
 import logging
 from typing import Optional
 
-# ---------------------------------------------------------------------------
 # Insert the urgency package directory onto the path so that
 # urgency_engine_v2.py and urgency_rules_v2.py can be imported cleanly.
-# ---------------------------------------------------------------------------
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _URGENCY_DIR = os.path.join(_HERE, "urgency")
 if _URGENCY_DIR not in sys.path:
@@ -77,10 +39,8 @@ from priority_config import (
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
 # LAZY-LOADED MODEL SINGLETONS
 # (each model is loaded at most once per process)
-# ============================================================
 
 _urgency_predict_fn = None        # callable: predict_urgency(complaint, status)
 _severity_tokenizer = None        # HuggingFace tokenizer
@@ -163,9 +123,7 @@ def _load_severity_model() -> None:
         _severity_device = None
 
 
-# ============================================================
 # NORMALISATION HELPERS
-# ============================================================
 
 def _normalise_urgency_label(raw_label: str) -> str:
     """
@@ -232,9 +190,7 @@ def _derive_severity_score(probability_map: dict) -> float:
     return max(0.0, min(1.0, score))
 
 
-# ============================================================
 # URGENCY INFERENCE
-# ============================================================
 
 def _get_urgency(complaint: str, status: str) -> tuple[str, float]:
     """
@@ -269,9 +225,7 @@ def _get_urgency(complaint: str, status: str) -> tuple[str, float]:
         return FALLBACK_URGENCY_LABEL, FALLBACK_URGENCY_SCORE
 
 
-# ============================================================
 # SEVERITY INFERENCE
-# ============================================================
 
 def _get_severity(complaint: str) -> tuple[str, float]:
     """
@@ -326,9 +280,7 @@ def _get_severity(complaint: str) -> tuple[str, float]:
         return FALLBACK_SEVERITY_LABEL, FALLBACK_SEVERITY_SCORE
 
 
-# ============================================================
 # PRIORITY DECISION ENGINE
-# ============================================================
 
 def _compute_combined_score(
     severity_score: float,
@@ -395,9 +347,7 @@ def _build_reason(
     return reason
 
 
-# ============================================================
 # PUBLIC API
-# ============================================================
 
 def process_complaint(
     complaint: str,
@@ -437,19 +387,13 @@ def process_complaint(
     complaint_str = str(complaint).strip() if complaint else ""
     status_str = str(status).strip() if status else "Open"
 
-    # --------------------------------------------------------
     # 1. Collect urgency
-    # --------------------------------------------------------
     urgency_label, urgency_score = _get_urgency(complaint_str, status_str)
 
-    # --------------------------------------------------------
     # 2. Collect severity
-    # --------------------------------------------------------
     severity_label, severity_score = _get_severity(complaint_str)
 
-    # --------------------------------------------------------
     # 3. Critical fast-path (spec rule 1)
-    # --------------------------------------------------------
     combined_score = _compute_combined_score(severity_score, urgency_score)
 
     if urgency_label == "CRITICAL" or severity_label == "CRITICAL":
@@ -471,15 +415,11 @@ def process_complaint(
             "priority_reason": reason,
         }
 
-    # --------------------------------------------------------
     # 4. Score-based priority (spec rules 2-4)
-    # --------------------------------------------------------
     score_priority = _score_to_priority(combined_score)
 
-    # --------------------------------------------------------
     # 5 & 6. Label-based override: take the highest priority
     #         from score, urgency label, severity label
-    # --------------------------------------------------------
     urgency_label_priority  = LABEL_TO_PRIORITY.get(urgency_label,  "P4")
     severity_label_priority = LABEL_TO_PRIORITY.get(severity_label, "P4")
 
@@ -487,9 +427,7 @@ def process_complaint(
     final_priority = _higher_priority(final_priority, urgency_label_priority)
     final_priority = _higher_priority(final_priority, severity_label_priority)
 
-    # --------------------------------------------------------
     # 7. Safety guard: ensure result is always in P1-P4
-    # --------------------------------------------------------
     if final_priority not in ("P1", "P2", "P3", "P4"):
         final_priority = "P4"
 
@@ -510,9 +448,7 @@ def process_complaint(
     }
 
 
-# ============================================================
 # STANDALONE DEMO
-# ============================================================
 
 if __name__ == "__main__":
     import json

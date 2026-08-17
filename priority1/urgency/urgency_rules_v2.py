@@ -1,15 +1,6 @@
 import re
-
-
-# ============================================================
 # URGENCY RULE ENGINE V2
-# ============================================================
-
-
-# ============================================================
 # 1. EMERGENCY / SAFETY
-# ============================================================
-
 EMERGENCY_PATTERNS = [
     r"\b911\b",
     r"\bemergency\b",
@@ -47,18 +38,9 @@ EMERGENCY_PATTERNS = [
     r"\bblasted\b",
     r"\bburst\b",
 ]
-
-
-# ============================================================
 # 2. COMPLETE SERVICE FAILURE
-# ============================================================
-
 SERVICE_FAILURE_PATTERNS = [
-
-    # --------------------------------------------------------
     # INTERNET / NETWORK DOWN
-    # --------------------------------------------------------
-
     r"\bno service\b",
     r"\bno internet\b",
     r"\bno internet connection\b",
@@ -80,19 +62,11 @@ SERVICE_FAILURE_PATTERNS = [
     r"\bnetwork problem\b",
     r"\bconnection problem\b",
     r"\bservice problem\b",
-
-    # --------------------------------------------------------
     # SERVICE UNAVAILABLE
-    # --------------------------------------------------------
-
     r"\bservice.*unavailable\b",
     r"\binternet.*unavailable\b",
     r"\bnetwork.*unavailable\b",
-
-    # --------------------------------------------------------
     # CONNECTION FAILURE
-    # --------------------------------------------------------
-
     r"\bunable to connect\b",
     r"\bcannot connect\b",
     r"\bcan't connect\b",
@@ -100,11 +74,7 @@ SERVICE_FAILURE_PATTERNS = [
     r"\bconnection.*fail(?:s|ed|ing|ure)?\b",
     r"\binternet.*fail(?:s|ed|ing|ure)?\b",
     r"\bnetwork.*fail(?:s|ed|ing|ure)?\b",
-
-    # --------------------------------------------------------
     # NOT WORKING
-    # --------------------------------------------------------
-
     r"\binternet.*not working\b",
     r"\bnetwork.*not working\b",
     r"\bservice.*not working\b",
@@ -116,11 +86,7 @@ SERVICE_FAILURE_PATTERNS = [
 
     r"\b(?:internet|network|service|connection|wifi|wi-fi).*"
     r"\bdoesn't work\b",
-
-    # --------------------------------------------------------
     # CALLING / PHONE SERVICE
-    # --------------------------------------------------------
-
     # Calling / phone service failures
     r"\bcannot make calls?\b",
     r"\bcan't make calls?\b",
@@ -163,11 +129,7 @@ SERVICE_FAILURE_PATTERNS = [
     r"\bservice.*disconnect",
     r"\bconnection.*disconnect",
 ]
-
-# ============================================================
 # 3. NETWORK / INTERNET QUALITY
-# ============================================================
-
 QUALITY_PATTERNS = [
     r"\bspeed\b",
     r"\bslow\b",
@@ -216,12 +178,7 @@ QUALITY_PATTERNS = [
     r"\binternet speeds?\b",
     r"\bnetwork speeds?\b",
 ]
-
-
-# ============================================================
 # 4. DATA CAP / DATA LIMIT
-# ============================================================
-
 DATA_CAP_PATTERNS = [
     r"\bdata cap\b",
     r"\bdata caps\b",
@@ -236,12 +193,7 @@ DATA_CAP_PATTERNS = [
     r"\bbandwidth limit\b",
     r"\busage cap\b",
 ]
-
-
-# ============================================================
 # 5. DURATION
-# ============================================================
-
 DURATION_PATTERNS = [
     r"\b\d+\s*(?:minute|minutes)\b",
     r"\b\d+\s*(?:hour|hours)\b",
@@ -277,12 +229,7 @@ DURATION_PATTERNS = [
     r"\bfor\s+the\s+past\s+\d+\s+"
     r"(?:day|days|week|weeks|month|months|year|years)\b",
 ]
-
-
-# ============================================================
 # 6. REPEATED SUPPORT
-# ============================================================
-
 REPEATED_SUPPORT_PATTERNS = [
 
     # Explicit repeated support interactions
@@ -313,11 +260,7 @@ REPEATED_SUPPORT_PATTERNS = [
     r"\bcontacted.*several times\b",
     r"\bcontacted.*multiple times\b",
 ]
-
-# ============================================================
 # 7. UNRESOLVED / PERSISTENT
-# ============================================================
-
 UNRESOLVED_PATTERNS = [
     r"\bstill not fixed\b",
     r"\bstill not working\b",
@@ -372,12 +315,7 @@ UNRESOLVED_PATTERNS = [
     r"\bnot resolved\b",
     r"\bstill unresolved\b",
 ]
-
-
-# ============================================================
 # 8. BILLING / PAYMENT
-# ============================================================
-
 BILLING_PATTERNS = [
     r"\bbill\b",
     r"\bbilling\b",
@@ -447,12 +385,7 @@ BILLING_PATTERNS = [
     r"\bcharged.*cancel",
     r"\bbilling.*cancel",
 ]
-
-
-# ============================================================
 # 9. ACCOUNT / CONTRACT / CANCELLATION
-# ============================================================
-
 ACCOUNT_PATTERNS = [
     r"\bcancel my account\b",
     r"\bcancel account\b",
@@ -492,12 +425,7 @@ ACCOUNT_PATTERNS = [
     r"\bforgot.*password\b",
     r"\breset.*password\b",
 ]
-
-
-# ============================================================
 # 10. SERIOUS / UNFAIR / DECEPTIVE COMPLAINT
-# ============================================================
-
 SERIOUS_COMPLAINT_PATTERNS = [
     r"\bunfair\b",
     r"\bunfair practices?\b",
@@ -537,12 +465,7 @@ SERIOUS_COMPLAINT_PATTERNS = [
 
     r"\bforcing me\b",
 ]
-
-
-# ============================================================
 # 11. ACCESS / AVAILABILITY
-# ============================================================
-
 ACCESS_PATTERNS = [
     r"\binternet availability\b",
     r"\bservice availability\b",
@@ -573,12 +496,7 @@ ACCESS_PATTERNS = [
     r"\bcan't login\b",
     r"\bunable to login\b",
 ]
-
-
-# ============================================================
 # 12. SUPPORT / TECHNICAL ISSUE
-# ============================================================
-
 SUPPORT_PATTERNS = [
     r"\btechnical support\b",
     r"\bcustomer service\b",
@@ -586,12 +504,7 @@ SUPPORT_PATTERNS = [
     r"\bsupport issue\b",
     r"\bsupport problem\b",
 ]
-
-
-# ============================================================
 # HELPER
-# ============================================================
-
 def matches_any(text, patterns):
 
     return int(
@@ -604,12 +517,7 @@ def matches_any(text, patterns):
             for pattern in patterns
         )
     )
-
-
-# ============================================================
 # DESCRIPTION
-# ============================================================
-
 def get_description(score):
 
     if score < -0.50:
@@ -620,22 +528,14 @@ def get_description(score):
 
     else:
         return "HIGH"
-
-# ============================================================
 # RULE ENGINE
-# ============================================================
-
 def calculate_rule_urgency(
     complaint,
     status="Open"
 ):
 
     text = str(complaint).lower()
-
-    # --------------------------------------------------------
     # DETECT SIGNALS
-    # --------------------------------------------------------
-
     emergency = matches_any(
         text,
         EMERGENCY_PATTERNS
@@ -700,11 +600,7 @@ def calculate_rule_urgency(
         str(status).lower()
         in ["open", "pending"]
     )
-
-    # --------------------------------------------------------
     # EMERGENCY
-    # --------------------------------------------------------
-
     if emergency:
 
         return {
@@ -727,11 +623,7 @@ def calculate_rule_urgency(
                 "active_case": active_case
             }
         }
-
-    # --------------------------------------------------------
     # START FROM LOW
-    # --------------------------------------------------------
-    
     score = 0.0
 
     meaningful_problem = any([
@@ -747,11 +639,7 @@ def calculate_rule_urgency(
         access_problem,
         support_problem
     ])
-
-    # --------------------------------------------------------
     # NO SIGNAL
-    # --------------------------------------------------------
-
     if not meaningful_problem:
 
         return {
@@ -774,11 +662,7 @@ def calculate_rule_urgency(
                 "active_case": active_case
             }
         }
-
-    # --------------------------------------------------------
     # BASE PROBLEM SCORES
-    # --------------------------------------------------------
-
     if service_failure:
         score += 0.50
 
@@ -802,11 +686,7 @@ def calculate_rule_urgency(
 
     if support_problem:
         score += 0.10
-
-    # --------------------------------------------------------
     # CONTEXT
-    # --------------------------------------------------------
-
     if duration:
         score += 0.20
 
@@ -815,11 +695,7 @@ def calculate_rule_urgency(
 
     if unresolved and not billing and not account_problem and not support_problem:
         score += 0.50
-
-    # --------------------------------------------------------
     # COMBINATION BONUSES
-    # --------------------------------------------------------
-
     if service_failure and duration:
         score += 0.10
 
@@ -855,33 +731,17 @@ def calculate_rule_urgency(
 
     if data_cap and billing:
         score += 0.10
-
-    # --------------------------------------------------------
     # ACTIVE CASE
-    # --------------------------------------------------------
-
     if active_case:
         score += 0.02
-
-    # --------------------------------------------------------
     # CAP SCORE
-    # --------------------------------------------------------
-
     score = max(
         -1.0,
         min(1.0, score)
     )
-
-    # --------------------------------------------------------
     # DESCRIPTION
-    # --------------------------------------------------------
-
     description = get_description(score)
-
-    # --------------------------------------------------------
     # RETURN
-    # --------------------------------------------------------
-
     return {
         "rule_urgency": round(
             score,
@@ -906,12 +766,7 @@ def calculate_rule_urgency(
             "active_case": active_case
         }
     }
-
-
-# ============================================================
 # TEST
-# ============================================================
-
 if __name__ == "__main__":
 
     test_cases = [

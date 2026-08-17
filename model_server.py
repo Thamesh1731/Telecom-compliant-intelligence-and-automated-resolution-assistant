@@ -1,16 +1,4 @@
-"""
-model_server.py
-
-Loads ALL models exactly once (embedding model, complaint classifier,
-cross-encoder reranker, Groq client) and keeps them resident in memory
-behind a persistent HTTP server.
-
-Run this FIRST, and leave it running:
-    python model_server.py
-
-Then in a separate terminal, run the client as many times as you like:
-    python main.py
-"""
+"""Resolver pipeline used by the FastAPI application."""
 
 import re
 import uuid
@@ -26,13 +14,9 @@ from retriever import (
 from llm_reasoning import generate_solution
 from resolver_retriever import find_resolver_solution
 
-# ============================================================
 # CONFIG
-# ============================================================
 
-# ============================================================
 # STEP 1: New complaint -> resolver base FIRST, LLM+KB fallback second
-# ============================================================
 
 def handle_new_complaint(complaint_text, predicted_category=None):
     if predicted_category is None:
@@ -79,9 +63,7 @@ def handle_new_complaint(complaint_text, predicted_category=None):
 
 
 
-# ============================================================
 # HTTP SERVER — keeps all models resident, handles /query and /feedback
-# ============================================================
 
 class RAGFeedbackHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):

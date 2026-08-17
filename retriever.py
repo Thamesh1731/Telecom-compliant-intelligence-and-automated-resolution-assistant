@@ -5,12 +5,7 @@ import re
 import joblib
 
 from category_mapper import map_category
-
-
-# ============================================================
 # CONFIGURATION
-# ============================================================
-
 DB_PATH = "chroma_db"
 COLLECTION_NAME = "telecom_knowledge_base"
 
@@ -32,12 +27,7 @@ SUBCATEGORY_WEIGHT = 0.15
 INTENT_WEIGHT = 0.15
 CATEGORY_WEIGHT = 0.15
 SECTION_WEIGHT = 0.15
-
-
-# ============================================================
 # LOAD MODELS
-# ============================================================
-
 print("Loading embedding model...")
 
 embedding_model = SentenceTransformer(
@@ -51,12 +41,7 @@ print("Loading category classifier...")
 
 classifier_path = Path(__file__).parent / "complaint_classifier_final.joblib"
 classifier = joblib.load(classifier_path)
-
-
-# ============================================================
 # CONNECT TO CHROMADB
-# ============================================================
-
 client = chromadb.PersistentClient(
     path=DB_PATH
 )
@@ -64,24 +49,14 @@ client = chromadb.PersistentClient(
 collection = client.get_collection(
     name=COLLECTION_NAME
 )
-
-
-# ============================================================
 # CATEGORY NORMALIZATION
-# ============================================================
-
 def normalize_category(category):
 
     if not category:
         return None
 
     return map_category(category)
-
-
-# ============================================================
 # CATEGORY CLASSIFICATION
-# ============================================================
-
 def classify_category(query):
     """
     Uses the trained .joblib classifier.
@@ -104,20 +79,11 @@ def classify_category(query):
     )
 
     return ranked
-
-
-# ============================================================
 # CALLING INTENT DETECTION
-# ============================================================
-
 def detect_calling_intent(query):
 
     text = query.lower().strip()
-
-    # --------------------------------------------------------
     # Incoming calls
-    # --------------------------------------------------------
-
     incoming_patterns = [
 
         r"\bnobody can call me\b",
@@ -155,12 +121,7 @@ def detect_calling_intent(query):
 
         if re.search(pattern, text):
             return "incoming_calls"
-
-
-    # --------------------------------------------------------
     # Outgoing calls
-    # --------------------------------------------------------
-
     outgoing_patterns = [
 
         r"\bcan't make calls\b",
@@ -189,12 +150,7 @@ def detect_calling_intent(query):
 
         if re.search(pattern, text):
             return "outgoing_calls"
-
-
-    # --------------------------------------------------------
     # Call quality / dropped calls
-    # --------------------------------------------------------
-
     call_quality_patterns = [
 
         r"\bcalls keep dropping\b",
@@ -224,12 +180,7 @@ def detect_calling_intent(query):
 
         if re.search(pattern, text):
             return "call_quality"
-
-
-    # --------------------------------------------------------
     # Caller ID
-    # --------------------------------------------------------
-
     caller_id_patterns = [
 
         r"\bcaller id\b",
@@ -253,12 +204,7 @@ def detect_calling_intent(query):
 
         if re.search(pattern, text):
             return "caller_id"
-
-
-    # --------------------------------------------------------
     # General number problem
-    # --------------------------------------------------------
-
     number_patterns = [
 
         r"\bmy number is not working\b",
@@ -277,12 +223,7 @@ def detect_calling_intent(query):
 
 
     return None
-
-
-# ============================================================
 # INTENT → KB SUBCATEGORY
-# ============================================================
-
 INTENT_SUBCATEGORY_MAP = {
 
     "incoming_calls":
@@ -300,12 +241,7 @@ INTENT_SUBCATEGORY_MAP = {
     "number_not_working":
         "Mobile Number Not Working"
 }
-
-
-# ============================================================
 # COSINE SIMILARITY
-# ============================================================
-
 def cosine_similarity(vector_a, vector_b):
 
     vector_a = np.array(vector_a)
@@ -324,12 +260,7 @@ def cosine_similarity(vector_a, vector_b):
         vector_a,
         vector_b
     ) / denominator
-
-
-# ============================================================
 # VECTOR SEARCH
-# ============================================================
-
 def vector_search(
     query,
     category=None,
@@ -356,12 +287,7 @@ def vector_search(
     )
 
     return results, query_embedding
-
-
-# ============================================================
 # SECTION USEFULNESS SCORER
-# ============================================================
-
 def get_section_usefulness(section_name):
     """
     Returns a section usefulness score between 0.0 and 1.0 based on keyword matching.
@@ -412,12 +338,7 @@ def get_section_usefulness(section_name):
 
     # Default for other content sections
     return 0.5
-
-
-# ============================================================
 # RERANK RESULTS
-# ============================================================
-
 def rerank_results(
     query,
     query_embedding,
@@ -454,19 +375,11 @@ def rerank_results(
             "subcategory",
             ""
         )
-
-        # ----------------------------------------------------
         # Semantic text similarity
-        # ----------------------------------------------------
-
         text_similarity = 1 / (
             1 + distance
         )
-
-        # ----------------------------------------------------
         # Subcategory similarity
-        # ----------------------------------------------------
-
         subcategory_embedding = (
             embedding_model.encode(
                 subcategory
@@ -479,11 +392,7 @@ def rerank_results(
                 subcategory_embedding
             )
         )
-
-        # ----------------------------------------------------
         # Explicit intent match
-        # ----------------------------------------------------
-
         intent_score = 0
 
         if target_subcategory:
@@ -503,25 +412,13 @@ def rerank_results(
             ):
 
                 intent_score = 0.75
-
-        # ----------------------------------------------------
         # Category compatibility
-        # ----------------------------------------------------
-
         chunk_category = metadata.get("category", "")
         category_compatibility = kb_category_probs.get(chunk_category, 0.0)
-
-        # ----------------------------------------------------
         # Section usefulness
-        # ----------------------------------------------------
-
         section_name = metadata.get("section_name", "Overview")
         section_usefulness = get_section_usefulness(section_name)
-
-        # ----------------------------------------------------
         # Final score
-        # ----------------------------------------------------
-
         final_score = (
 
             TEXT_WEIGHT
@@ -587,12 +484,7 @@ def rerank_results(
     )
 
     return reranked
-
-
-# ============================================================
 # REMOVE DUPLICATE DOCUMENTS
-# ============================================================
-
 def remove_duplicate_documents(results, top_k=TOP_K):
     """
     Selects top_k diverse chunks using a greedy penalty-based diversification algorithm (MMR-style).
@@ -661,22 +553,13 @@ def remove_duplicate_documents(results, top_k=TOP_K):
             break
 
     return selected
-
-
-# ============================================================
 # MAIN RETRIEVER
-# ============================================================
-
 def retrieve(
     query,
     predicted_category=None,
     top_k=TOP_K
 ):
-
-    # --------------------------------------------------------
     # CATEGORY CLASSIFIER (Build soft category compatibility map)
-    # --------------------------------------------------------
-
     ranked_categories = classify_category(query)
 
     if predicted_category is not None:
@@ -704,18 +587,10 @@ def retrieve(
             kb_cat = normalize_category(class_name)
             if kb_cat:
                 kb_category_probs[kb_cat] = kb_category_probs.get(kb_cat, 0.0) + prob
-
-    # --------------------------------------------------------
     # Detect intent (Runs independently of classifier)
-    # --------------------------------------------------------
-
     detected_intent = detect_calling_intent(query)
     print("\nDetected intent:", detected_intent)
-
-    # --------------------------------------------------------
     # Unfiltered semantic vector search across the full KB
-    # --------------------------------------------------------
-
     results, query_embedding = vector_search(
         query=query,
         category=None,  # No category hard filter!
@@ -725,11 +600,7 @@ def retrieve(
     if not results["documents"] or not results["documents"][0]:
         print("\nNo candidate documents found in vector store.")
         return []
-
-    # --------------------------------------------------------
     # LEVEL 1: DOCUMENT RETRIEVAL & SCORING
-    # --------------------------------------------------------
-
     documents_meta = {}
 
     for doc_text, metadata, distance in zip(
@@ -794,11 +665,7 @@ def retrieve(
 
     # Sort documents by relevance score
     doc_scores.sort(key=lambda x: x["score"], reverse=True)
-
-    # --------------------------------------------------------
     # LEVEL 2: AMBIGUITY / CONFIDENCE DETECTION
-    # --------------------------------------------------------
-
     is_ambiguous = False
     selected_docs = []
 
@@ -820,11 +687,7 @@ def retrieve(
     else:
         print("\nNo documents ranked.")
         return []
-
-    # --------------------------------------------------------
     # LEVEL 3: FULL ORIGINAL DOCUMENT RETRIEVAL
-    # --------------------------------------------------------
-
     retrieved_documents = []
     kb_path = Path("knowledge_base")
 
@@ -871,12 +734,7 @@ def retrieve(
         return []
 
     return retrieved_documents
-
-
-# ============================================================
 # DISPLAY RESULTS
-# ============================================================
-
 def display_results(results):
 
     print("\n")
@@ -989,12 +847,7 @@ def display_results(results):
         print(
             result["text"][:1000]
         )
-
-
-# ============================================================
 # TEST MODE
-# ============================================================
-
 if __name__ == "__main__":
 
     print("\nTelecom RAG Retriever")
