@@ -17,6 +17,7 @@ if _URGENCY_DIR not in sys.path:
 from priority_config import (
     SEVERITY_WEIGHT,
     URGENCY_WEIGHT,
+    SENTIMENT_WEIGHT,
     THRESHOLD_P1,
     THRESHOLD_P2,
     THRESHOLD_P3,
@@ -280,22 +281,37 @@ def _get_severity(complaint: str) -> tuple[str, float]:
         return FALLBACK_SEVERITY_LABEL, FALLBACK_SEVERITY_SCORE
 
 
+def _get_sentiment(complaint: str) -> tuple[str, float]:
+    """Get the hosted sentiment label and negative-probability score."""
+    try:
+        from sentiment_engine import classify_sentiment
+
+        return classify_sentiment(complaint)
+    except Exception as exc:
+        logger.warning("Sentiment API unavailable; using neutral fallback: %s", exc)
+        return "NEUTRAL", 0.0
+
+
 # PRIORITY DECISION ENGINE
 
 def _compute_combined_score(
     severity_score: float,
     urgency_score: float,
+    sentiment_score: float = 0.0,
 ) -> float:
     """
     Compute the weighted combined score.
 
     combined_score = (SEVERITY_WEIGHT x severity_score)
                    + (URGENCY_WEIGHT  x urgency_score)
+                   + (SENTIMENT_WEIGHT x sentiment_score)
 
     Both inputs must already be normalised to [0.0, 1.0].
     """
     return round(
-        (SEVERITY_WEIGHT * severity_score) + (URGENCY_WEIGHT * urgency_score),
+        (SEVERITY_WEIGHT * severity_score)
+        + (URGENCY_WEIGHT * urgency_score)
+        + (SENTIMENT_WEIGHT * sentiment_score),
         4,
     )
 
@@ -322,6 +338,7 @@ def _higher_priority(p1: str, p2: str) -> str:
 def _build_reason(
     urgency_label: str,
     severity_label: str,
+    sentiment_label: str,
     combined_score: float,
     final_priority: str,
     score_priority: str,
@@ -340,7 +357,8 @@ def _build_reason(
     overridden = final_priority != score_priority
     reason = (
         f"Combined score {combined_score:.3f} "
-        f"(severity {severity_label.lower()}, urgency {urgency_label.lower()})"
+        f"(severity {severity_label.lower()}, urgency {urgency_label.lower()}, "
+        f"sentiment {sentiment_label.lower()})"
     )
     if overridden:
         reason += f"; escalated from {score_priority} by label-based override"
@@ -392,16 +410,19 @@ def process_complaint(
 
     # 2. Collect severity
     severity_label, severity_score = _get_severity(complaint_str)
+    sentiment_label, sentiment_score = _get_sentiment(complaint_str)
 
     # 3. Critical fast-path (spec rule 1)
-    combined_score = _compute_combined_score(severity_score, urgency_score)
+    combined_score = _compute_combined_score(
+        severity_score, urgency_score, sentiment_score
+    )
 
     if urgency_label == "CRITICAL" or severity_label == "CRITICAL":
         # Override to P1 regardless of scores
         final_priority = "P1"
         score_priority = _score_to_priority(combined_score)
         reason = _build_reason(
-            urgency_label, severity_label, combined_score,
+            urgency_label, severity_label, sentiment_label, combined_score,
             final_priority, score_priority,
         )
         return {
@@ -410,6 +431,8 @@ def process_complaint(
             "urgency_score":   urgency_score,
             "severity":        severity_label,
             "severity_score":  severity_score,
+            "sentiment":      sentiment_label,
+            "sentiment_score": sentiment_score,
             "priority":        final_priority,
             "priority_score":  combined_score,
             "priority_reason": reason,
@@ -432,7 +455,7 @@ def process_complaint(
         final_priority = "P4"
 
     reason = _build_reason(
-        urgency_label, severity_label, combined_score,
+        urgency_label, severity_label, sentiment_label, combined_score,
         final_priority, score_priority,
     )
 
@@ -442,6 +465,8 @@ def process_complaint(
         "urgency_score":   urgency_score,
         "severity":        severity_label,
         "severity_score":  severity_score,
+        "sentiment":      sentiment_label,
+        "sentiment_score": sentiment_score,
         "priority":        final_priority,
         "priority_score":  combined_score,
         "priority_reason": reason,
