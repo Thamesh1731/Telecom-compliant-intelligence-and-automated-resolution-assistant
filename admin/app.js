@@ -292,19 +292,32 @@ function updateMetricsUI() {
 }
 
 function formatCategoryName(cat) {
-  if (!cat) return 'General';
+  if (!cat || cat === 'General') return 'Account / Subscription';
   const clean = String(cat).trim();
   const map = {
     'internet': 'Internet / Broadband',
     'broadband': 'Internet / Broadband',
     'cable_tv': 'Cable TV',
+    'cable': 'Cable TV',
     'number_calling': 'Number / Calling',
+    'calling': 'Number / Calling',
     'number_porting': 'Number Porting',
+    'porting': 'Number Porting',
     'account_subscription': 'Account / Subscription',
+    'subscription': 'Account / Subscription',
     'coverage_outage': 'Coverage & Outage',
+    'outage': 'Coverage & Outage',
+    'network': 'Network / Coverage',
     'installation_technician': 'Technician & Installation',
+    'technician': 'Technician & Installation',
     'security_fraud': 'Security & Fraud',
-    'device_handset': 'Device / Handset'
+    'fraud': 'Security & Fraud',
+    'device_handset': 'Device / Handset',
+    'device': 'Device / Handset',
+    'billing': 'Billing / Account',
+    'payment': 'Billing & Payment',
+    'roaming': 'Roaming & International',
+    'sim': 'SIM / Mobile Service'
   };
   if (map[clean.toLowerCase()]) return map[clean.toLowerCase()];
   return clean.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
