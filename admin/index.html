@@ -110,19 +110,12 @@
 
       <nav class="nav-menu">
         <div class="nav-section-label">MAIN WORKSPACE</div>
-        <button class="nav-btn active" data-tab="dashboard">
-          <i class="fa-solid fa-grid-2"></i>
-          <span>Agent Dashboard</span>
-          <span class="nav-badge alert" id="dash-escalated-count">8</span>
-        </button>
-
-        <button class="nav-btn" data-tab="all-escalated">
+        <button class="nav-btn active" data-tab="all-escalated">
           <i class="fa-solid fa-triangle-exclamation"></i>
           <span>Escalated Complaints</span>
-          <span class="nav-badge warning" id="nav-escalated-total">8</span>
+          <span class="nav-badge warning" id="nav-escalated-total">0</span>
         </button>
 
-        <div class="nav-section-label">FEEDBACK</div>
         <button class="nav-btn" data-tab="negative-feedback">
           <i class="fa-solid fa-comment-slash"></i>
           <span>Negative Feedback</span>
@@ -145,9 +138,8 @@
       <!-- Top Header Bar -->
       <header class="top-header">
         <div class="header-left">
-          <h1 class="page-title" id="page-title">Agent Dashboard</h1>
-          <span class="page-subtitle" id="page-subtitle">Immediate view of complaints requiring human
-            intelligence</span>
+          <h1 class="page-title" id="page-title">All System Escalations</h1>
+          <span class="page-subtitle" id="page-subtitle">Full registry of automated exception triage cases</span>
         </div>
 
         <div class="header-right">
@@ -162,92 +154,8 @@
         </div>
       </header>
 
-      <!-- TAB 1: AGENT DASHBOARD -->
-      <section class="tab-content active" id="tab-dashboard">
-
-        <!-- Metrics / Summary Cards -->
-        <div class="metrics-grid">
-          <div class="metric-card card-primary" data-filter-queue="all">
-            <div class="metric-header">
-              <span class="metric-label">Open Escalations</span>
-              <div class="metric-icon"><i class="fa-solid fa-clipboard-user"></i></div>
-            </div>
-            <div class="metric-value" id="metric-assigned">12</div>
-            <div class="metric-footer">
-              <span class="trend neutral"><i class="fa-solid fa-layer-group"></i> Awaiting technician action</span>
-            </div>
-          </div>
-
-          <div class="metric-card card-danger" data-filter-queue="high">
-            <div class="metric-header">
-              <span class="metric-label">High Priority</span>
-              <div class="metric-icon"><i class="fa-solid fa-fire"></i></div>
-            </div>
-            <div class="metric-value" id="metric-high">4</div>
-            <div class="metric-footer">
-              <span class="trend urgent"><i class="fa-solid fa-clock"></i> Requires Immediate Action</span>
-            </div>
-          </div>
-
-          <div class="metric-card card-warning" data-filter-queue="escalated">
-            <div class="metric-header">
-              <span class="metric-label">Escalated</span>
-              <div class="metric-icon"><i class="fa-solid fa-arrow-up-right-dots"></i></div>
-            </div>
-            <div class="metric-value" id="metric-escalated">8</div>
-            <div class="metric-footer">
-              <span class="trend warning"><i class="fa-solid fa-robot"></i> AI Confidence Below SLA</span>
-            </div>
-          </div>
-
-          <div class="metric-card card-info" data-filter-queue="aging">
-            <div class="metric-header">
-              <span class="metric-label">Due / Aging</span>
-              <div class="metric-icon"><i class="fa-solid fa-hourglass-half"></i></div>
-            </div>
-            <div class="metric-value" id="metric-aging">3</div>
-            <div class="metric-footer">
-              <span class="trend info"><i class="fa-solid fa-triangle-exclamation"></i> Approaching 2h Limit</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Escalated Complaints Action Table -->
-        <div class="section-card">
-          <div class="section-header">
-            <div class="section-title-group">
-              <h2><i class="fa-solid fa-triangle-exclamation color-warning"></i> Escalated Complaints</h2>
-              <span class="badge badge-subtle">Requires Human Decision</span>
-            </div>
-            <button class="btn btn-outline btn-sm" id="view-all-queue-btn">
-              <span>View All Escalations</span> <i class="fa-solid fa-arrow-right"></i>
-            </button>
-          </div>
-
-          <div class="table-responsive">
-            <table class="data-table" id="dashboard-tickets-table">
-              <thead>
-                <tr>
-                  <th>Ticket</th>
-                  <th>Customer</th>
-                  <th>Issue Category</th>
-                  <th>AI Priority</th>
-                  <th>Risk Score</th>
-                  <th>Escalation Reason</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="dashboard-tickets-body">
-                <!-- Dynamically Populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </section>
-
       <!-- TAB 2: ALL ESCALATED -->
-      <section class="tab-content" id="tab-all-escalated">
+      <section class="tab-content active" id="tab-all-escalated">
         <div class="section-card">
           <div class="section-header">
             <h2><i class="fa-solid fa-list-check"></i> System-Wide Escalations</h2>
@@ -266,8 +174,6 @@
                   <th>Ticket</th>
                   <th>Customer</th>
                   <th>Category</th>
-                  <th>Priority</th>
-                  <th>Risk Score</th>
                   <th>Why Escalated</th>
                   <th>Status</th>
                   <th>Action</th>
@@ -278,6 +184,8 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
         </div>
       </section>
 

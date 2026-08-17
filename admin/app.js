@@ -8,7 +8,7 @@ let tickets = [];
 
 // Active ticket state & current navigation filters
 let activeTicketId = null;
-let currentTab = 'dashboard';
+let currentTab = 'all-escalated';
 let currentSearchQuery = '';
 let currentEscalationFilter = 'all';
 let negativeFeedbackItems = [];
@@ -78,7 +78,7 @@ async function initApp() {
 
   // Auto-refresh queue every 3 seconds so new escalations and negative feedback appear live
   setInterval(() => {
-    const isDrawerOpen = document.getElementById('ticket-drawer')?.classList.contains('active');
+    const isDrawerOpen = document.getElementById('ticket-detail-drawer')?.classList.contains('active');
     const isModalOpen = document.getElementById('neg-feedback-modal')?.classList.contains('active');
     if (!isDrawerOpen && !isModalOpen) {
       fetchTicketsFromBackend(true);
@@ -279,32 +279,21 @@ function setupAuthEventListeners() {
  * Update Metric Cards & Badge Counters
  */
 function updateMetricsUI() {
-  const activeTickets = tickets.filter(t => t.status === 'ESCALATED');
-
+  const activeTickets = tickets.filter(t => t.status === 'ESCALATED' || t.status === 'OPEN');
   const totalAssigned = activeTickets.length;
-  const highPriority = activeTickets.filter(t => t.priority === 'HIGH').length;
-  const medPriority = activeTickets.filter(t => t.priority === 'MEDIUM').length;
-  const lowPriority = activeTickets.filter(t => t.priority === 'LOW').length;
 
-  // Aging defined as > 2 hours
-  const agingCount = activeTickets.filter(t => {
-    const hours = parseInt(t.aging.split('h')[0]) || 0;
-    return hours >= 2;
-  }).length;
+  const badge = document.getElementById('nav-escalated-total');
+  if (badge) badge.innerText = totalAssigned;
 
-  // DOM Updates
-  document.getElementById('metric-assigned').innerText = totalAssigned;
-  document.getElementById('metric-high').innerText = highPriority;
-  document.getElementById('metric-escalated').innerText = totalAssigned;
-  document.getElementById('metric-aging').innerText = agingCount;
-
-  document.getElementById('dash-escalated-count').innerText = totalAssigned;
-  document.getElementById('nav-escalated-total').innerText = totalAssigned;
+  const metricAssigned = document.getElementById('metric-assigned');
+  if (metricAssigned) metricAssigned.innerText = totalAssigned;
+  const metricEscalated = document.getElementById('metric-escalated');
+  if (metricEscalated) metricEscalated.innerText = totalAssigned;
 }
 
 function getFilteredTickets(activeOnly = false) {
   let filtered = activeOnly
-    ? tickets.filter(t => t.status === 'ESCALATED')
+    ? tickets.filter(t => t.status === 'ESCALATED' || t.status === 'OPEN')
     : [...tickets];
 
   if (currentEscalationFilter === 'low-confidence') {
@@ -327,12 +316,13 @@ function getFilteredTickets(activeOnly = false) {
  */
 function renderDashboardTable() {
   const tbody = document.getElementById('dashboard-tickets-body');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   const activeTickets = getFilteredTickets(true);
 
   if (activeTickets.length === 0) {
-    const hasOpenTickets = tickets.some(t => t.status === 'ESCALATED');
+    const hasOpenTickets = tickets.some(t => t.status === 'ESCALATED' || t.status === 'OPEN');
     const message = hasOpenTickets
       ? 'No open escalations match the current filters.'
       : 'No open escalations. Technician workload is clear.';
@@ -346,22 +336,24 @@ function renderDashboardTable() {
 
     const priorityBadge = getPriorityBadgeHtml(t.priority);
     const riskMeter = getRiskMeterHtml(t.riskScore);
-    const firstReason = t.whyEscalated[0] || 'Low AI Confidence';
+    const firstReason = (t.whyEscalated && t.whyEscalated[0]) ? t.whyEscalated[0] : 'Low AI Confidence';
+    const customerName = t.customer || t.customerEmail || 'Customer Submission';
+    const categoryName = t.category || t.predictedCategory || 'General';
 
     tr.innerHTML = `
-      <td><span class="ticket-id">${t.id}</span></td>
+      <td><span class="ticket-id">${escapeHtml(t.id)}</span></td>
       <td>
-        <span class="customer-name">${escapeHtml(t.customer)}</span>
-        <span class="customer-sub">${t.tier}</span>
+        <span class="customer-name">${escapeHtml(customerName)}</span>
+        <span class="customer-sub">${escapeHtml(t.tier || 'Residential / Business')}</span>
       </td>
       <td>
-        <span class="category-badge"><i class="fa-solid ${getCategoryIcon(t.category)}"></i> ${t.category}</span>
+        <span class="category-badge"><i class="fa-solid ${getCategoryIcon(categoryName)}"></i> ${escapeHtml(categoryName)}</span>
       </td>
       <td>${priorityBadge}</td>
       <td>${riskMeter}</td>
       <td><span class="reason-pill" title="${escapeHtml(firstReason)}">${escapeHtml(firstReason)}</span></td>
       <td>
-        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openTicketDetail('${t.id}')">
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openTicketDetail('${escapeHtml(t.id)}')">
           <i class="fa-solid fa-folder-open"></i> Review Context
         </button>
       </td>
@@ -375,11 +367,12 @@ function renderDashboardTable() {
  */
 function renderAllEscalatedTable() {
   const tbody = document.getElementById('all-escalated-body');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   const filteredTickets = getFilteredTickets(false);
   if (filteredTickets.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 32px; color: var(--text-muted);">No complaints match the current filters.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 32px; color: var(--text-muted);">No complaints match the current filters.</td></tr>`;
     return;
   }
 
@@ -388,24 +381,28 @@ function renderAllEscalatedTable() {
     tr.onclick = () => openTicketDetail(t.id);
 
     const isResolved = t.status === 'RESOLVED';
+    const customerName = t.customer || t.customerEmail || 'Customer Submission';
+    const accountId = t.accountId || (t.id ? `#ACC-${t.id.replace(/\D/g, '').slice(-5) || '10293'}` : '#ACC-10293');
+    const categoryName = t.category || t.predictedCategory || 'General';
+    const reasonText = (t.whyEscalated && t.whyEscalated[0]) ? t.whyEscalated[0] : (t.escalationReason || 'Automated Escalation');
 
     tr.innerHTML = `
-      <td><span class="ticket-id">${t.id}</span></td>
+      <td><span class="ticket-id">${escapeHtml(t.id)}</span></td>
       <td>
-        <span class="customer-name">${escapeHtml(t.customer)}</span>
-        <span class="customer-sub">${t.accountId}</span>
+        <span class="customer-name">${escapeHtml(customerName)}</span>
+        <span class="customer-sub">${escapeHtml(accountId)}</span>
       </td>
-      <td><span class="category-badge">${t.category}</span></td>
-      <td>${getPriorityBadgeHtml(t.priority)}</td>
-      <td>${getRiskMeterHtml(t.riskScore)}</td>
-      <td><span class="reason-pill">${escapeHtml(t.whyEscalated[0])}</span></td>
+      <td>
+        <span class="category-badge"><i class="fa-solid ${getCategoryIcon(categoryName)}"></i> ${escapeHtml(categoryName)}</span>
+      </td>
+      <td><span class="reason-pill" title="${escapeHtml(reasonText)}">${escapeHtml(reasonText)}</span></td>
       <td>
         <span class="badge ${isResolved ? 'badge-low' : 'badge-high'}">
-          ${t.status}
+          ${escapeHtml(t.status || 'OPEN')}
         </span>
       </td>
       <td>
-        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openTicketDetail('${t.id}')">
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openTicketDetail('${escapeHtml(t.id)}')">
           View Details
         </button>
       </td>
@@ -423,18 +420,17 @@ function openTicketDetail(ticketId) {
 
   activeTicketId = ticket.id;
   document.getElementById('drawer-ticket-id').innerText = ticket.id;
-  document.getElementById('drawer-issue-title').innerText = ticket.issueSummary;
-  document.getElementById('drawer-priority-badge').className = `badge ${getPriorityBadgeClass(ticket.priority)}`;
-  document.getElementById('drawer-priority-badge').innerText = `${ticket.priority} PRIORITY`;
-  document.getElementById('drawer-risk-badge').innerText = `RISK: ${ticket.riskScore}%`;
-  document.getElementById('drawer-customer-name').innerText = ticket.customer;
+  document.getElementById('drawer-issue-title').innerText = ticket.issueSummary || ticket.complaintText || 'Escalated Complaint';
+  document.getElementById('drawer-customer-name').innerText = ticket.customer || ticket.customerEmail || 'Customer Submission';
   document.getElementById('drawer-customer-email').innerText = ticket.customerEmail || 'Not provided';
-  document.getElementById('drawer-complaint-text').innerText = `"${ticket.complaintText}"`;
+  document.getElementById('drawer-complaint-text').innerText = ticket.complaintText || 'No complaint text provided.';
+
   const reasonsList = document.getElementById('drawer-escalation-reasons');
   reasonsList.innerHTML = '';
-  (ticket.whyEscalated || ['Technician review required']).forEach(r => {
+  const reasons = (ticket.whyEscalated && ticket.whyEscalated.length > 0) ? ticket.whyEscalated : ['Automated Exception Triggered'];
+  reasons.forEach(r => {
     const li = document.createElement('li');
-    li.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(r)}`;
+    li.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>${escapeHtml(r)}</span>`;
     reasonsList.appendChild(li);
   });
   document.getElementById('drawer-technician-response').value = '';
@@ -461,13 +457,11 @@ function setupEventListeners() {
       btn.classList.add('active');
       const tabId = btn.getAttribute('data-tab');
       currentTab = tabId;
-      document.getElementById(`tab-${tabId}`).classList.add('active');
+      const targetTab = document.getElementById(`tab-${tabId}`);
+      if (targetTab) targetTab.classList.add('active');
 
       // Update Page Headers
-      if (tabId === 'dashboard') {
-        document.getElementById('page-title').innerText = 'Agent Dashboard';
-        document.getElementById('page-subtitle').innerText = 'Immediate view of complaints requiring human intelligence';
-      } else if (tabId === 'all-escalated') {
+      if (tabId === 'all-escalated') {
         document.getElementById('page-title').innerText = 'All System Escalations';
         document.getElementById('page-subtitle').innerText = 'Full registry of automated exception triage cases';
       } else if (tabId === 'negative-feedback') {
@@ -489,10 +483,13 @@ function setupEventListeners() {
     });
   });
 
-  // View All Queue Button on Dashboard
-  document.getElementById('view-all-queue-btn').addEventListener('click', () => {
-    document.querySelector('[data-tab="all-escalated"]').click();
-  });
+  // View All Queue Button on Dashboard (if present)
+  const viewAllBtn = document.getElementById('view-all-queue-btn');
+  if (viewAllBtn) {
+    viewAllBtn.addEventListener('click', () => {
+      document.querySelector('[data-tab="all-escalated"]').click();
+    });
+  }
 
   // Escalation filter chips
   document.querySelectorAll('.chip-filters .chip').forEach(chip => {
