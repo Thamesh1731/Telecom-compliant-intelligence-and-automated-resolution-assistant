@@ -6,6 +6,7 @@ resolver base is intentionally separate from the normal knowledge base.
 """
 
 import re
+from difflib import SequenceMatcher
 from pathlib import Path
 
 import chromadb
@@ -86,14 +87,25 @@ def store_resolver_solution(item: dict, resolved_solution: str) -> Path:
 
 
 def _upsert_file(path: Path, content: str, folder: str, item: dict | None = None) -> None:
+    complaint_match = re.search(
+        r"(?ims)^##[ \t]+Complaint[ \t]*\r?\n(.*?)(?=^##[ \t]+|\Z)",
+        content,
+    )
+    complaint_text = complaint_match.group(1).strip() if complaint_match else ""
     metadata = {
         "category": folder,
         "subcategory": str((item or {}).get("subcategory", "General")),
         "file_name": path.name,
         "feedback_id": str((item or {}).get("feedback_id", path.stem)),
+        "complaint": complaint_text[:1000],
         "source": "resolver_base",
     }
-    embedding = embedding_model.encode(content).tolist()
+    # Match against the complaint, not the full record. Embedding the
+    # technician solution and metadata dilutes the complaint signal and can
+    # make an exact resolver match fall below the threshold.
+    subcategory = str((item or {}).get("subcategory", ""))
+    embedding_text = "\n".join(part for part in (complaint_text, subcategory, folder) if part)
+    embedding = embedding_model.encode(embedding_text or content).tolist()
     resolver_collection.upsert(
         ids=[path.as_posix()],
         documents=[content],
@@ -108,12 +120,21 @@ def sync_resolver_base() -> None:
     for folder in _CATEGORY_FOLDERS:
         (RESOLVER_ROOT / folder).mkdir(parents=True, exist_ok=True)
 
+    current_ids = set()
     for path in RESOLVER_ROOT.glob("*/*.md"):
         try:
             content = path.read_text(encoding="utf-8")
             _upsert_file(path, content, path.parent.name)
+            current_ids.add(path.as_posix())
         except OSError:
             continue
+
+    # Markdown files are the resolver base of record. Remove Chroma entries
+    # left behind by deleted or renamed resolution files.
+    existing = resolver_collection.get()
+    stale_ids = [item_id for item_id in existing.get("ids", []) if item_id not in current_ids]
+    if stale_ids:
+        resolver_collection.delete(ids=stale_ids)
 
 
 def find_resolver_solution(complaint: str, category: str | None = None) -> dict | None:
@@ -122,10 +143,9 @@ def find_resolver_solution(complaint: str, category: str | None = None) -> dict 
         return None
 
     query_embedding = embedding_model.encode(complaint).tolist()
-    searches = []
-    if category:
-        searches.append({"category": category_folder(category)})
-    searches.append(None)
+    # Never use a solution from another category just because it has a higher
+    # embedding score. A category mismatch is a false positive for support.
+    searches = [{"category": category_folder(category)}] if category else [None]
 
     results = None
     similarity = 0.0
@@ -136,21 +156,33 @@ def find_resolver_solution(complaint: str, category: str | None = None) -> dict 
         candidate_results = resolver_collection.query(**kwargs)
         if not candidate_results.get("ids") or not candidate_results["ids"][0]:
             continue
-        candidate_similarity = 1 - candidate_results["distances"][0][0]
-        if candidate_similarity >= RESOLVER_MATCH_THRESHOLD:
-            results = candidate_results
-            similarity = candidate_similarity
-            break
+        results = candidate_results
+        break
 
     if results is None:
         return None
 
-    metadata = results["metadatas"][0][0]
+    query_words = set(re.findall(r"[a-z0-9]+", complaint.lower()))
+    candidates = []
+    for index, candidate_metadata in enumerate(results["metadatas"][0]):
+        candidate_text = str(candidate_metadata.get("complaint", "")).lower()
+        candidate_words = set(re.findall(r"[a-z0-9]+", candidate_text))
+        overlap = len(query_words & candidate_words) / max(len(query_words), 1)
+        phrase_similarity = SequenceMatcher(None, complaint.lower(), candidate_text).ratio()
+        semantic = 1 - results["distances"][0][index]
+        combined = max(semantic, overlap, phrase_similarity * 0.8)
+        candidates.append((combined, index))
+
+    similarity, best_index = max(candidates, key=lambda item: item[0])
+    if similarity < RESOLVER_MATCH_THRESHOLD:
+        return None
+
+    metadata = results["metadatas"][0][best_index]
     return {
-        "text": results["documents"][0][0],
+        "text": results["documents"][0][best_index],
         "metadata": {
             **metadata,
-            "document_id": metadata.get("feedback_id", results["ids"][0][0]),
+            "document_id": metadata.get("feedback_id", results["ids"][0][best_index]),
             "section_name": "Technician-Approved Resolution",
         },
         "similarity": float(similarity),

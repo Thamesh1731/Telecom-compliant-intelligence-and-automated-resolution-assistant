@@ -18,6 +18,18 @@ from resolver_retriever import find_resolver_solution
 
 # STEP 1: New complaint -> resolver base FIRST, LLM+KB fallback second
 
+
+def _api_safe_matches(results):
+    """Keep source text for internal policy checks without leaking NumPy values."""
+    safe_matches = []
+    for result in results:
+        metadata = result.get("metadata", {})
+        safe_matches.append({
+            "text": str(result.get("text", "")),
+            "metadata": {str(key): str(value) for key, value in metadata.items()},
+        })
+    return safe_matches
+
 def handle_new_complaint(complaint_text, predicted_category=None):
     if predicted_category is None:
         ranked = classify_category(complaint_text)
@@ -45,7 +57,16 @@ def handle_new_complaint(complaint_text, predicted_category=None):
     results = retrieve(complaint_text, predicted_category=predicted_category, top_k=5)
 
     if not results:
-        return {"complaint_id": None, "found": False, "reason": "no KB match found"}
+        solution_text = generate_solution(complaint_text, [])
+        return {
+            "complaint_id": complaint_id,
+            "found": False,
+            "source": "escalation",
+            "category": category or "General",
+            "subcategory": "General",
+            "matches": [],
+            "solution": solution_text,
+        }
 
     solution_text = generate_solution(complaint_text, results)
     top = results[0]
@@ -56,6 +77,7 @@ def handle_new_complaint(complaint_text, predicted_category=None):
         "source": "llm_kb",
         "category": top["metadata"].get("category"),
         "subcategory": top["metadata"].get("subcategory"),
+        "matches": _api_safe_matches(results),
         "solution": solution_text,
     }
 
