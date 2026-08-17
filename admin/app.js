@@ -628,7 +628,7 @@ function renderNegativeFeedbackTable() {
   tbody.innerHTML = '';
 
   if (negativeFeedbackItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--text-muted);">No negative feedback items pending. All resolutions accepted by customers!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--text-muted);">No negative feedback items pending. All resolutions accepted by customers!</td></tr>`;
     return;
   }
 
@@ -637,9 +637,6 @@ function renderNegativeFeedbackTable() {
     tr.style.cursor = 'pointer';
     tr.onclick = () => openNegativeFeedbackDetail(item.feedback_id);
 
-    const complaintPreview = item.complaint && item.complaint.length > 50
-      ? item.complaint.substring(0, 50) + '...'
-      : (item.complaint || 'N/A');
     const solutionPreview = item.ai_solution && item.ai_solution.length > 50
       ? item.ai_solution.substring(0, 50) + '...'
       : (item.ai_solution || 'N/A');
@@ -653,7 +650,6 @@ function renderNegativeFeedbackTable() {
 
     tr.innerHTML = `
       <td><span class="ticket-id">${escapeHtml(item.feedback_id)}</span></td>
-      <td><span class="reason-pill" title="${escapeHtml(item.complaint)}">${escapeHtml(complaintPreview)}</span></td>
       <td><span class="reason-pill" title="${escapeHtml(item.ai_solution)}">${escapeHtml(solutionPreview)}</span></td>
       <td><span class="reason-pill" style="color: #f87171;" title="${escapeHtml(item.feedback)}">${escapeHtml(feedbackPreview)}</span></td>
       <td><span class="badge badge-subtle"><i class="fa-solid fa-clock"></i> ${escapeHtml(submittedDate)}</span></td>
