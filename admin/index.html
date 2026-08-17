@@ -1,25 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent Portal | Telecom AI Triage System</title>
-  <meta name="description" content="Human Agent Portal for Telecom AI Complaint Triage - Exception Handling & High-Risk Ticket Resolution.">
+  <meta name="description"
+    content="Human Agent Portal for Telecom AI Complaint Triage - Exception Handling & High-Risk Ticket Resolution.">
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="dark-theme">
   <!-- ADMIN LOGIN PORTAL OVERLAY -->
   <div class="admin-login-overlay" id="admin-login-overlay">
     <div class="login-background-grid"></div>
     <div class="glow-orb orb-1"></div>
     <div class="glow-orb orb-2"></div>
-    
+
     <div class="login-card-container">
       <div class="login-card-header">
         <div class="cyber-badge">
@@ -141,7 +146,8 @@
       <header class="top-header">
         <div class="header-left">
           <h1 class="page-title" id="page-title">Agent Dashboard</h1>
-          <span class="page-subtitle" id="page-subtitle">Immediate view of complaints requiring human intelligence</span>
+          <span class="page-subtitle" id="page-subtitle">Immediate view of complaints requiring human
+            intelligence</span>
         </div>
 
         <div class="header-right">
@@ -158,12 +164,12 @@
 
       <!-- TAB 1: AGENT DASHBOARD -->
       <section class="tab-content active" id="tab-dashboard">
-        
+
         <!-- Metrics / Summary Cards -->
         <div class="metrics-grid">
           <div class="metric-card card-primary" data-filter-queue="all">
             <div class="metric-header">
-            <span class="metric-label">Open Escalations</span>
+              <span class="metric-label">Open Escalations</span>
               <div class="metric-icon"><i class="fa-solid fa-clipboard-user"></i></div>
             </div>
             <div class="metric-value" id="metric-assigned">12</div>
@@ -314,7 +320,7 @@
     <!-- SLIDE-OVER DETAIL PANEL (Ticket Details) -->
     <div class="detail-drawer-overlay" id="drawer-overlay"></div>
     <aside class="detail-drawer" id="ticket-detail-drawer">
-      
+
       <div class="drawer-header">
         <div class="drawer-header-info">
           <div class="ticket-badge-group">
@@ -333,8 +339,10 @@
         <div class="drawer-card customer-card">
           <div class="card-label"><i class="fa-solid fa-comment"></i><span>CUSTOMER COMPLAINT</span></div>
           <div class="customer-meta">
-            <div class="meta-item"><span class="meta-key">Customer:</span><span class="meta-val" id="drawer-customer-name">Customer</span></div>
-            <div class="meta-item"><span class="meta-key">Email:</span><span class="meta-val" id="drawer-customer-email">Not provided</span></div>
+            <div class="meta-item"><span class="meta-key">Customer:</span><span class="meta-val"
+                id="drawer-customer-name">Customer</span></div>
+            <div class="meta-item"><span class="meta-key">Email:</span><span class="meta-val"
+                id="drawer-customer-email">Not provided</span></div>
           </div>
           <blockquote class="complaint-text" id="drawer-complaint-text">Complaint text</blockquote>
         </div>
@@ -347,7 +355,9 @@
         <div class="drawer-card technician-response-card">
           <div class="card-label"><i class="fa-solid fa-reply"></i><span>CUSTOMER SUPPORT MESSAGE</span></div>
           <p class="response-help">Write a brief update for the customer. Avoid internal or technical notes.</p>
-          <textarea id="drawer-technician-response" rows="8" placeholder="Example: Our customer support team is reviewing your case and will contact you soon." style="display:block;width:100%;min-height:150px;background:#0b0f19 !important;color:#f9fafb !important;border:1px solid rgba(255,255,255,0.16);border-radius:10px;padding:12px;resize:vertical;font:inherit;line-height:1.5;appearance:none;"></textarea>
+          <textarea id="drawer-technician-response" rows="8"
+            placeholder="Example: Our customer support team is reviewing your case and will contact you soon."
+            style="display:block;width:100%;min-height:150px;background:#0b0f19 !important;color:#f9fafb !important;border:1px solid rgba(255,255,255,0.16);border-radius:10px;padding:12px;resize:vertical;font:inherit;line-height:1.5;appearance:none;"></textarea>
         </div>
       </div>
 
@@ -368,33 +378,53 @@
           <button class="close-modal-btn" id="close-neg-modal-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-          <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; background: var(--surface-overlay); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+          <div
+            style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; background: var(--surface-overlay); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle);">
             <div>
-              <span style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Issue Category: </span>
-              <span id="neg-modal-category" style="font-weight: bold; color: var(--text-primary); margin-left: 6px;"></span>
+              <span
+                style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Issue
+                Category: </span>
+              <span id="neg-modal-category"
+                style="font-weight: bold; color: var(--text-primary); margin-left: 6px;"></span>
             </div>
             <div id="neg-modal-subcategory-badge" style="font-size: 11px; color: var(--text-muted);"></div>
           </div>
           <div style="margin-bottom: 16px;">
-            <label style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Complaint</label>
-            <div id="neg-modal-complaint" style="background: var(--surface-overlay); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: var(--text-primary); line-height: 1.5;"></div>
+            <label
+              style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Customer
+              Complaint</label>
+            <div id="neg-modal-complaint"
+              style="background: var(--surface-overlay); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: var(--text-primary); line-height: 1.5;">
+            </div>
           </div>
           <div style="margin-bottom: 16px;">
-            <label style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">AI-Generated Solution</label>
-            <div id="neg-modal-ai-solution" style="background: var(--surface-overlay); border: 1px solid var(--accent-cyan-dim); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: var(--text-primary); line-height: 1.5;"></div>
+            <label
+              style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">AI-Generated
+              Solution</label>
+            <div id="neg-modal-ai-solution"
+              style="background: var(--surface-overlay); border: 1px solid var(--accent-cyan-dim); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: var(--text-primary); line-height: 1.5;">
+            </div>
           </div>
           <div style="margin-bottom: 16px;">
-            <label style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Feedback</label>
-            <div id="neg-modal-feedback" style="background: var(--surface-overlay); border: 1px solid var(--accent-red-dim); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: #f87171; line-height: 1.5;"></div>
+            <label
+              style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Customer
+              Feedback</label>
+            <div id="neg-modal-feedback"
+              style="background: var(--surface-overlay); border: 1px solid var(--accent-red-dim); border-radius: 8px; padding: 12px; margin-top: 6px; font-size: 13px; color: #f87171; line-height: 1.5;">
+            </div>
           </div>
           <div class="form-group">
-            <label for="neg-modal-solution-text" style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Correct / Resolved Solution</label>
-            <textarea id="neg-modal-solution-text" rows="5" placeholder="Enter the correct resolution for this complaint..." style="margin-top: 6px;"></textarea>
+            <label for="neg-modal-solution-text"
+              style="font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">Correct
+              / Resolved Solution</label>
+            <textarea id="neg-modal-solution-text" rows="5"
+              placeholder="Enter the correct resolution for this complaint..." style="margin-top: 6px;"></textarea>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-outline" id="neg-modal-cancel-btn">Cancel</button>
-          <button class="btn btn-success" id="neg-modal-submit-btn"><i class="fa-solid fa-check"></i> Submit Resolved Solution</button>
+          <button class="btn btn-success" id="neg-modal-submit-btn"><i class="fa-solid fa-check"></i> Submit Resolved
+            Solution</button>
         </div>
       </div>
     </div>
@@ -406,4 +436,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>

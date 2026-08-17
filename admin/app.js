@@ -37,10 +37,10 @@ async function loadCredentials() {
 }
 
 async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);                    
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 let activeAdmin = null;
@@ -75,26 +75,35 @@ async function initApp() {
   fetchTicketsFromBackend();
   fetchNegativeFeedback();
   setupEventListeners();
+
+  // Auto-refresh queue every 3 seconds so new escalations and negative feedback appear live
+  setInterval(() => {
+    const isDrawerOpen = document.getElementById('ticket-drawer')?.classList.contains('active');
+    const isModalOpen = document.getElementById('neg-feedback-modal')?.classList.contains('active');
+    if (!isDrawerOpen && !isModalOpen) {
+      fetchTicketsFromBackend(true);
+      fetchNegativeFeedback(true);
+    }
+  }, 3000);
 }
 
-async function fetchTicketsFromBackend() {
+async function fetchTicketsFromBackend(isSilent = false) {
   try {
     const res = await fetch('/api/admin/tickets');
     if (res.ok) {
       const data = await res.json();
-      if (data.tickets && Array.isArray(data.tickets) && data.tickets.length > 0) {
+      if (data.tickets && Array.isArray(data.tickets)) {
         tickets = data.tickets;
       }
     }
   } catch (err) {
-    console.log('No backend tickets loaded yet:', err);
+    if (!isSilent) console.log('No backend tickets loaded yet:', err);
   }
-  renderDashboardTable();
   renderAllEscalatedTable();
   updateMetricsUI();
 }
 
-async function fetchNegativeFeedback() {
+async function fetchNegativeFeedback(isSilent = false) {
   try {
     const res = await fetch('/api/admin/negative-feedback');
     if (res.ok) {
@@ -104,14 +113,14 @@ async function fetchNegativeFeedback() {
       }
     }
   } catch (err) {
-    console.log('No negative feedback loaded yet:', err);
+    if (!isSilent) console.log('No negative feedback loaded yet:', err);
   }
   renderNegativeFeedbackTable();
   updateNegFeedbackBadge();
 }
 
 function updateNegFeedbackBadge() {
-  const count = negativeFeedbackItems.length;
+  const count = negativeFeedbackItems.filter(i => i.status === 'pending').length || negativeFeedbackItems.length;
   const badge = document.getElementById('nav-neg-feedback-count');
   if (badge) badge.innerText = count;
 }
@@ -205,8 +214,8 @@ function setupAuthEventListeners() {
       const hashedPass = await sha256(passwordInput);
 
       // Check credentials strictly against authorized personnel registry
-      const matchedAccount = authorizedPersonnel.find(a => 
-        a.username.toLowerCase() === usernameInput.toLowerCase() && 
+      const matchedAccount = authorizedPersonnel.find(a =>
+        a.username.toLowerCase() === usernameInput.toLowerCase() &&
         a.hash === hashedPass
       );
 
@@ -271,12 +280,12 @@ function setupAuthEventListeners() {
  */
 function updateMetricsUI() {
   const activeTickets = tickets.filter(t => t.status === 'ESCALATED');
-  
+
   const totalAssigned = activeTickets.length;
   const highPriority = activeTickets.filter(t => t.priority === 'HIGH').length;
   const medPriority = activeTickets.filter(t => t.priority === 'MEDIUM').length;
   const lowPriority = activeTickets.filter(t => t.priority === 'LOW').length;
-  
+
   // Aging defined as > 2 hours
   const agingCount = activeTickets.filter(t => {
     const hours = parseInt(t.aging.split('h')[0]) || 0;
@@ -590,7 +599,7 @@ function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  
+
   let icon = 'fa-info-circle';
   if (type === 'success') icon = 'fa-circle-check';
   if (type === 'warning') icon = 'fa-triangle-exclamation';
@@ -673,7 +682,7 @@ function openNegativeFeedbackDetail(feedbackId) {
   const subcategoryText = item.subcategory ? `Subcategory: ${item.subcategory}` : '';
 
   document.getElementById('neg-modal-title').innerText = `Review: ${feedbackId}`;
-  
+
   const catEl = document.getElementById('neg-modal-category');
   if (catEl) {
     catEl.innerHTML = `<i class="fa-solid ${getCategoryIcon(categoryText)}"></i> ${escapeHtml(categoryText)}`;
