@@ -31,3 +31,16 @@ chroma_data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Large Model Files
+*.h5
+*.pt 
+*.pth 
+*.onnx
+*.bin
+*.safetensors
+*.model
+models/
+*.joblib
+severity_outputs/
+priority1/severity_outputs/
