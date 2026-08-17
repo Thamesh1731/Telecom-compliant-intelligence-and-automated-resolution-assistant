@@ -21,7 +21,10 @@ from sqlalchemy import (
     desc,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
+
+# ---------------------------------------------------------------------------
 # Database URL & Engine Configuration
+# ---------------------------------------------------------------------------
 # Example AWS RDS MySQL URL: mysql+pymysql://admin:password@telecom-mysql-db.c123456.us-east-1.rds.amazonaws.com:3306/telecom_cx
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
@@ -47,7 +50,11 @@ else:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+
+# ---------------------------------------------------------------------------
 # Database Table Models
+# ---------------------------------------------------------------------------
 class ComplaintRecord(Base):
     """Logs all customer complaint intakes, category predictions, and AI resolutions."""
     __tablename__ = "complaints"
@@ -164,7 +171,11 @@ class ResolverSolutionRecord(Base):
     category = Column(String(100), nullable=True)
     subcategory = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+# ---------------------------------------------------------------------------
 # Database Initialization & Session Helpers
+# ---------------------------------------------------------------------------
 def init_db():
     """Create all tables in the database if they do not exist."""
     Base.metadata.create_all(bind=engine)
@@ -184,7 +195,11 @@ def get_db_session():
         raise
     finally:
         session.close()
+
+
+# ---------------------------------------------------------------------------
 # CRUD Database Operations
+# ---------------------------------------------------------------------------
 def db_save_complaint(
     complaint_id: str,
     complaint: str,
