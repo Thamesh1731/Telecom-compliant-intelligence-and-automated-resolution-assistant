@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 # Environment & Path Configuration
 # ---------------------------------------------------------------------------
 _ENV_FILE = Path(__file__).parent / ".env"
-load_dotenv(_ENV_FILE)
+load_dotenv(_ENV_FILE, override=True)
 
 _PROJECT_ROOT = Path(__file__).parent
 if str(_PROJECT_ROOT) not in sys.path:
@@ -45,9 +45,23 @@ from model_server import (
 from resolver_retriever import store_resolver_solution, resolver_solution_count
 from email_service import send_resolution_email
 from request_queue import ComplaintRequestQueue, classify_request
+import database
+from database import (
+    init_db,
+    db_save_complaint,
+    db_save_escalated_ticket,
+    db_get_escalated_tickets,
+    db_resolve_escalated_ticket,
+    db_save_negative_feedback,
+    db_get_negative_feedback,
+    db_resolve_negative_feedback,
+)
+
+# Initialize database schema (AWS RDS MySQL / SQLite) on backend launch
+init_db()
 
 # ---------------------------------------------------------------------------
-# Global State
+# Global State (Synchronized with Database)
 # ---------------------------------------------------------------------------
 ESCALATED_TICKETS: List[Dict[str, Any]] = []
 NEGATIVE_FEEDBACK_ITEMS: List[Dict[str, Any]] = []
@@ -283,6 +297,22 @@ async def process_complaint(request: ComplaintRequest):
 
     if escalation_required:
         ESCALATED_TICKETS.append(ticket_data)
+        db_save_escalated_ticket(ticket_data)
+
+    # Persist processed complaint to database
+    db_save_complaint(
+        complaint_id=complaint_id,
+        complaint=complaint_text,
+        email=request.email.strip(),
+        city=request.city or "",
+        state=request.state or "",
+        zip_code=request.zipCode or "",
+        category=category,
+        subcategory=subcategory,
+        confidence=res.get("confidence", 0.94),
+        ai_solution=solution,
+        status=ticket_data["status"],
+    )
 
     return {
         "success": True,
@@ -310,7 +340,7 @@ async def process_complaint(request: ComplaintRequest):
 async def submit_negative_feedback(req: NegativeFeedbackRequest):
     """
     Customer reports the AI solution did not solve their problem.
-    Stores the complaint + AI solution + user feedback for admin/technician review.
+    Stores the complaint + AI solution + user feedback for admin/technician review in DB and disk.
     """
     feedback_id = f"NFB-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4().int)[:6]}"
 
@@ -327,11 +357,44 @@ async def submit_negative_feedback(req: NegativeFeedbackRequest):
         "submitted_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    # Persist to disk
+    # Persist to database (AWS RDS MySQL / SQLite)
+    db_save_negative_feedback(item)
+
+    # Also register as an open escalated ticket in DB for admin dashboard
+    neg_ticket = {
+        "id": feedback_id,
+        "complaintId": req.complaint_id,
+        "customer": "Customer Escalation (Unresolved AI)",
+        "accountId": f"#ACC-{str(uuid.uuid4().int)[:5]}",
+        "tier": "Residential / Business",
+        "location": "Regional Subscriber Node",
+        "customerEmail": req.email.strip(),
+        "category": req.category or "General",
+        "subcategory": req.subcategory or "General",
+        "issueSummary": f"Customer rejected AI solution: {req.feedback[:60]}...",
+        "priority": "HIGH",
+        "riskScore": 95,
+        "aging": "Just now",
+        "status": "OPEN",
+        "assignedTo": "Level-3 Network Operations",
+        "complaintText": req.complaint,
+        "sentiment": "Negative Customer Feedback",
+        "whyEscalated": [f"Customer Feedback: {req.feedback}"],
+        "aiSummary": f"Initial AI diagnosis failed. Category: {req.category}",
+        "aiRecommendation": req.ai_solution,
+        "ragSources": ["Customer Reported Failure"],
+        "timeline": [
+            {"time": datetime.now().strftime("%I:%M %p"), "event": "Negative feedback logged and routed to Level-3"}
+        ],
+        "notes": []
+    }
+    db_save_escalated_ticket(neg_ticket)
+    ESCALATED_TICKETS.append(neg_ticket)
+
+    # Persist to disk fallback
     filepath = RESOLVER_PENDING / f"{feedback_id}.json"
     filepath.write_text(json.dumps(item, indent=2), encoding="utf-8")
 
-    # Keep in memory
     NEGATIVE_FEEDBACK_ITEMS.append(item)
 
     return {"success": True, "feedback_id": feedback_id, "message": "Negative feedback recorded for technician review."}
@@ -339,7 +402,10 @@ async def submit_negative_feedback(req: NegativeFeedbackRequest):
 
 @app.get("/api/admin/negative-feedback")
 async def get_negative_feedback():
-    """Return all pending negative feedback items for admin review."""
+    """Return all pending negative feedback items from the database."""
+    db_pending = db_get_negative_feedback(status="pending")
+    if db_pending:
+        return {"items": db_pending, "count": len(db_pending)}
     pending = [item for item in NEGATIVE_FEEDBACK_ITEMS if item.get("status") == "pending"]
     return {"items": pending, "count": len(pending)}
 
@@ -348,10 +414,8 @@ async def get_negative_feedback():
 def resolve_feedback(req: ResolveFeedbackRequest):
     """
     Admin/technician submits the correct solution for a negative feedback item.
-    Moves it from pending to resolved in resolver_base.
+    Moves it from pending to resolved in database and resolver_base.
     """
-    # Serialize resolution and email delivery so repeated clicks cannot create
-    # duplicate resolver files or send duplicate emails.
     with RESOLUTION_LOCK:
         item = next(
             (fb for fb in NEGATIVE_FEEDBACK_ITEMS if fb["feedback_id"] == req.feedback_id),
@@ -362,6 +426,10 @@ def resolve_feedback(req: ResolveFeedbackRequest):
             raise HTTPException(status_code=409, detail="This feedback has already been resolved.")
         if resolved_file.exists():
             raise HTTPException(status_code=409, detail="This feedback has already been resolved.")
+        if not item:
+            # Try fetching from database
+            db_records = db_get_negative_feedback()
+            item = next((fb for fb in db_records if fb["feedback_id"] == req.feedback_id), None)
         if not item:
             raise HTTPException(status_code=404, detail=f"Feedback item {req.feedback_id} not found.")
 
@@ -391,9 +459,22 @@ def resolve_feedback(req: ResolveFeedbackRequest):
         if email_error:
             item["email_error"] = email_error
 
-        # Save the final resolution record, including email delivery status.
-        resolved_file.write_text(json.dumps(item, indent=2), encoding="utf-8")
+        # Update database record
+        db_resolve_negative_feedback(
+            feedback_id=req.feedback_id,
+            resolved_solution=req.resolved_solution,
+            email_status=email_status,
+            email_error=email_error,
+        )
+        db_resolve_escalated_ticket(
+            ticket_id=req.feedback_id,
+            support_message=req.resolved_solution,
+            email_status=email_status,
+            email_error=email_error,
+        )
 
+        # Save to disk file fallback
+        resolved_file.write_text(json.dumps(item, indent=2), encoding="utf-8")
         if pending_file.exists():
             pending_file.unlink()
 
@@ -416,7 +497,10 @@ def resolve_feedback(req: ResolveFeedbackRequest):
 # ---------------------------------------------------------------------------
 @app.get("/api/admin/tickets")
 async def get_admin_tickets():
-    """Return all real escalated tickets captured by the backend."""
+    """Return all real escalated tickets from the database."""
+    db_tickets = db_get_escalated_tickets()
+    if db_tickets:
+        return {"tickets": db_tickets}
     return {"tickets": ESCALATED_TICKETS}
 
 
@@ -425,6 +509,9 @@ def resolve_escalated_ticket(req: ResolveTicketRequest):
     """Save a technician response for an escalated ticket and email the customer."""
     with RESOLUTION_LOCK:
         ticket = next((item for item in ESCALATED_TICKETS if item["id"] == req.ticket_id), None)
+        if not ticket:
+            db_tickets = db_get_escalated_tickets()
+            ticket = next((item for item in db_tickets if item["id"] == req.ticket_id), None)
         if not ticket:
             raise HTTPException(status_code=404, detail=f"Escalated ticket {req.ticket_id} not found.")
         if ticket.get("status") == "RESOLVED":
@@ -459,6 +546,14 @@ def resolve_escalated_ticket(req: ResolveTicketRequest):
             "event": "Technician resolved the escalation and customer notification was "
             + ("sent." if email_status == "sent" else "not delivered."),
         })
+
+        # Update database record
+        db_resolve_escalated_ticket(
+            ticket_id=ticket["id"],
+            support_message=resolved_solution,
+            email_status=email_status,
+            email_error=email_error,
+        )
 
         return {
             "success": True,
