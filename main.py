@@ -387,37 +387,6 @@ async def submit_negative_feedback(req: NegativeFeedbackRequest):
     # Persist to database (AWS RDS MySQL / SQLite)
     db_save_negative_feedback(item)
 
-    # Also register as an open escalated ticket in DB for admin dashboard
-    neg_ticket = {
-        "id": feedback_id,
-        "complaintId": req.complaint_id,
-        "customer": "Customer Escalation (Unresolved AI)",
-        "accountId": f"#ACC-{str(uuid.uuid4().int)[:5]}",
-        "tier": "Residential / Business",
-        "location": "Regional Subscriber Node",
-        "customerEmail": req.email.strip(),
-        "category": req.category or "General",
-        "subcategory": req.subcategory or "General",
-        "issueSummary": f"Customer rejected AI solution: {req.feedback[:60]}...",
-        "priority": "HIGH",
-        "riskScore": 95,
-        "aging": "Just now",
-        "status": "OPEN",
-        "assignedTo": "Level-3 Network Operations",
-        "complaintText": req.complaint,
-        "sentiment": "Negative Customer Feedback",
-        "whyEscalated": [f"Customer Feedback: {req.feedback}"],
-        "aiSummary": f"Initial AI diagnosis failed. Category: {req.category}",
-        "aiRecommendation": req.ai_solution,
-        "ragSources": ["Customer Reported Failure"],
-        "timeline": [
-            {"time": datetime.now().strftime("%I:%M %p"), "event": "Negative feedback logged and routed to Level-3"}
-        ],
-        "notes": []
-    }
-    db_save_escalated_ticket(neg_ticket)
-    ESCALATED_TICKETS.append(neg_ticket)
-
     # Persist to disk fallback
     filepath = RESOLVER_PENDING / f"{feedback_id}.json"
     filepath.write_text(json.dumps(item, indent=2), encoding="utf-8")
