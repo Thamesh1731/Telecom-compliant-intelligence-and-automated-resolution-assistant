@@ -154,6 +154,8 @@ class ResolveTicketRequest(BaseModel):
 
 class SimpleQueryRequest(BaseModel):
     complaint: str
+
+
 # Escalation Detection Helper
 def check_escalation(
     complaint_text: str,
