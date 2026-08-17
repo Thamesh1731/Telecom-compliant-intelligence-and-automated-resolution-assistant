@@ -457,6 +457,7 @@ function setupEventListeners() {
       btn.classList.add('active');
       const tabId = btn.getAttribute('data-tab');
       currentTab = tabId;
+      sessionStorage.setItem('signalcx_active_tab', tabId);
       const targetTab = document.getElementById(`tab-${tabId}`);
       if (targetTab) targetTab.classList.add('active');
 
@@ -471,6 +472,23 @@ function setupEventListeners() {
       }
     });
   });
+
+  // Top Header Refresh Button
+  const topRefreshBtn = document.getElementById('refresh-btn');
+  if (topRefreshBtn) {
+    topRefreshBtn.addEventListener('click', () => {
+      showToast('Refreshing queue...', 'info');
+      fetchTicketsFromBackend();
+      fetchNegativeFeedback();
+    });
+  }
+
+  // Restore active tab after refresh
+  const savedTab = sessionStorage.getItem('signalcx_active_tab');
+  if (savedTab) {
+    const savedBtn = document.querySelector(`.nav-btn[data-tab="${savedTab}"]`);
+    if (savedBtn) savedBtn.click();
+  }
 
   // Drawer Close Button & Overlay
   document.getElementById('close-drawer-btn').addEventListener('click', closeTicketDrawer);
@@ -637,11 +655,11 @@ function renderNegativeFeedbackTable() {
     tr.style.cursor = 'pointer';
     tr.onclick = () => openNegativeFeedbackDetail(item.feedback_id);
 
-    const solutionPreview = item.ai_solution && item.ai_solution.length > 50
-      ? item.ai_solution.substring(0, 50) + '...'
+    const solutionPreview = item.ai_solution && item.ai_solution.length > 60
+      ? item.ai_solution.substring(0, 60) + '...'
       : (item.ai_solution || 'N/A');
-    const feedbackPreview = item.feedback && item.feedback.length > 50
-      ? item.feedback.substring(0, 50) + '...'
+    const feedbackPreview = item.feedback && item.feedback.length > 60
+      ? item.feedback.substring(0, 60) + '...'
       : (item.feedback || 'N/A');
 
     const submittedDate = item.submitted_at
