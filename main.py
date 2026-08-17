@@ -264,7 +264,11 @@ async def process_complaint(request: ComplaintRequest):
     is_found = bool(res.get("found", True))
     complaint_id = res.get("complaint_id") or str(uuid.uuid4())
     solution = res.get("solution", "")
-    category = res.get("category", "General")
+    category = res.get("category")
+    if not category or category == "General":
+        from retriever import classify_category, normalize_category
+        ranked = classify_category(complaint_text)
+        category = normalize_category(ranked[0][0]) if ranked else "Broadband / Internet"
     subcategory = res.get("subcategory", "General")
     source = res.get("source", "llm_kb")
 

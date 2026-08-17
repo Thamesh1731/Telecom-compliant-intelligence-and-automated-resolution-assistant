@@ -451,7 +451,8 @@ function openTicketDetail(ticketId) {
 
   activeTicketId = ticket.id;
   document.getElementById('drawer-ticket-id').innerText = ticket.id;
-  document.getElementById('drawer-issue-title').innerText = ticket.issueSummary || ticket.complaintText || 'Escalated Complaint';
+  const issueTitleEl = document.getElementById('drawer-issue-title');
+  if (issueTitleEl) issueTitleEl.innerText = ticket.issueSummary || ticket.complaintText || 'Escalated Complaint';
   document.getElementById('drawer-customer-name').innerText = ticket.customer || ticket.customerEmail || 'Customer Submission';
   document.getElementById('drawer-customer-email').innerText = ticket.customerEmail || 'Not provided';
   document.getElementById('drawer-complaint-text').innerText = ticket.complaintText || 'No complaint text provided.';
