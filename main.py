@@ -391,10 +391,7 @@ async def submit_negative_feedback(req: NegativeFeedbackRequest):
 async def get_negative_feedback():
     """Return all pending negative feedback items from the database."""
     db_pending = db_get_negative_feedback(status="pending")
-    if db_pending:
-        return {"items": db_pending, "count": len(db_pending)}
-    pending = [item for item in NEGATIVE_FEEDBACK_ITEMS if item.get("status") == "pending"]
-    return {"items": pending, "count": len(pending)}
+    return {"items": db_pending or [], "count": len(db_pending or [])}
 
 
 @app.post("/api/admin/resolve-feedback")
@@ -482,9 +479,7 @@ def resolve_feedback(req: ResolveFeedbackRequest):
 async def get_admin_tickets():
     """Return all real escalated tickets from the database."""
     db_tickets = db_get_escalated_tickets()
-    if db_tickets:
-        return {"tickets": db_tickets}
-    return {"tickets": ESCALATED_TICKETS}
+    return {"tickets": db_tickets or []}
 
 
 @app.post("/api/admin/resolve-ticket")
