@@ -1488,41 +1488,19 @@ body {
   margin-bottom: 24px;
 }
 
-.cyber-badge {
-  margin-bottom: 14px;
-}
-
-.cyber-shield-icon {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
-  border: 1.5px solid var(--accent-primary);
+/* Login Lottie Logo Container */
+.login-lottie-logo-container {
+  width: 96px;
+  height: 96px;
+  background: radial-gradient(circle, #e0f2fe 0%, #f0f9ff 70%, transparent 100%);
+  border: 1.5px solid #bae6fd;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  color: var(--accent-primary);
-  box-shadow: 0 0 20px rgba(2, 132, 199, 0.25);
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.12);
   overflow: hidden;
-}
-
-.scanner-laser {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #0284c7, #38bdf8, transparent);
-  box-shadow: 0 0 8px #0284c7;
-  animation: laserScan 2.5s ease-in-out infinite;
-}
-
-@keyframes laserScan {
-  0% { top: 0%; opacity: 0.2; }
-  50% { top: 90%; opacity: 1; }
-  100% { top: 0%; opacity: 0.2; }
 }
 
 .login-title {
