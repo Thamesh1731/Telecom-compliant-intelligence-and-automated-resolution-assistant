@@ -19,6 +19,7 @@ from sqlalchemy import (
     Integer,
     select,
     desc,
+    text,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 # Database URL & Engine Configuration
@@ -53,6 +54,7 @@ class ComplaintRecord(Base):
     __tablename__ = "complaints"
 
     complaint_id = Column(String(64), primary_key=True, index=True)
+    ticket_id = Column(String(64), nullable=True, index=True)
     customer_email = Column(String(255), nullable=True, index=True)
     complaint_text = Column(Text, nullable=False)
     city = Column(String(100), nullable=True)
@@ -178,8 +180,17 @@ class ResolverSolutionRecord(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 # Database Initialization & Session Helpers
 def init_db():
-    """Create all tables in the database if they do not exist."""
+    """Create all tables in the database if they do not exist and ensure ticket_id column."""
     Base.metadata.create_all(bind=engine)
+    try:
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE complaints ADD COLUMN ticket_id VARCHAR(64)"))
+                conn.commit()
+            except Exception:
+                pass
+    except Exception:
+        pass
     db_target = DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL
     print(f"[Database] Schema initialized on: {db_target}")
 
@@ -209,11 +220,13 @@ def db_save_complaint(
     confidence: float = 0.9,
     ai_solution: str = "",
     status: str = "RESOLVED",
+    ticket_id: str = "",
 ) -> None:
     """Save a processed customer complaint record."""
     with get_db_session() as db:
         record = ComplaintRecord(
             complaint_id=complaint_id,
+            ticket_id=ticket_id or None,
             customer_email=email,
             complaint_text=complaint,
             city=city,
@@ -265,16 +278,24 @@ def db_resolve_escalated_ticket(
     email_status: str,
     email_error: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Resolve an escalated ticket and record technician support response."""
+    """Resolve an escalated ticket by technician: sets status to SOLVED and syncs complaint record."""
     with get_db_session() as db:
         record = db.get(EscalatedTicketRecord, ticket_id)
         if not record:
             return None
-        record.status = "RESOLVED"
+        record.status = "SOLVED"
         record.support_message = support_message
         record.email_status = email_status
         record.email_error = email_error
         record.resolved_at = datetime.now(timezone.utc)
+
+        # Sync matching complaint record to SOLVED
+        if record.complaint_id:
+            cmp_rec = db.get(ComplaintRecord, record.complaint_id)
+            if cmp_rec:
+                cmp_rec.status = "SOLVED"
+                cmp_rec.ai_solution = support_message
+
         return record.to_dict()
 
 
@@ -311,16 +332,23 @@ def db_resolve_negative_feedback(
     email_status: str,
     email_error: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Mark negative feedback as resolved by a technician and record solution."""
+    """Mark negative feedback as SOLVED by technician, record solution, and sync complaint record."""
     with get_db_session() as db:
         record = db.get(NegativeFeedbackRecord, feedback_id)
         if not record:
             return None
-        record.status = "resolved"
+        record.status = "SOLVED"
         record.resolved_solution = resolved_solution
         record.email_status = email_status
         record.email_error = email_error
         record.resolved_at = datetime.now(timezone.utc)
+
+        # Sync matching complaint record to SOLVED
+        if record.complaint_id:
+            cmp_rec = db.get(ComplaintRecord, record.complaint_id)
+            if cmp_rec:
+                cmp_rec.status = "SOLVED"
+                cmp_rec.ai_solution = resolved_solution
 
         # Log into permanent technician resolutions table
         res_log = ResolverSolutionRecord(
@@ -333,3 +361,110 @@ def db_resolve_negative_feedback(
         )
         db.add(res_log)
         return record.to_dict()
+
+
+def db_get_complaint_by_id(identifier: str) -> Optional[Dict[str, Any]]:
+    """
+    Retrieve complaint / ticket status by searching:
+    1. EscalatedTicketRecord (ticket_id == identifier or complaint_id == identifier)
+    2. NegativeFeedbackRecord (feedback_id == identifier or complaint_id == identifier)
+    3. ComplaintRecord (complaint_id == identifier or ticket_id == identifier)
+
+    Returns:
+    - status: 'SOLVED' (if technician resolved it), 'RESOLVED' (if AI resolved it),
+              'ESCALATED' (if escalated and pending technician), 'PENDING' (if feedback under review).
+    """
+    if not identifier:
+        return None
+
+    clean_id = identifier.strip()
+
+    with get_db_session() as db:
+        # 1. Search in escalated tickets (contains live technician updates)
+        stmt_esc = select(EscalatedTicketRecord).where(
+            (EscalatedTicketRecord.ticket_id == clean_id)
+            | (EscalatedTicketRecord.complaint_id == clean_id)
+        )
+        esc_rec = db.scalars(stmt_esc).first()
+        if esc_rec:
+            # Check if admin has resolved this escalation
+            is_solved = bool(esc_rec.support_message or (esc_rec.status and esc_rec.status.upper() in ["SOLVED", "RESOLVED"]))
+            final_status = "SOLVED" if is_solved else "ESCALATED"
+            return {
+                "ticketId": esc_rec.ticket_id,
+                "complaint_id": esc_rec.complaint_id or esc_rec.ticket_id,
+                "email": esc_rec.customer_email or "",
+                "complaint": esc_rec.complaint_text,
+                "category": esc_rec.category or "General",
+                "subcategory": esc_rec.subcategory or "General",
+                "status": final_status,
+                "ai_solution": esc_rec.support_message or esc_rec.ai_solution or "",
+                "support_message": esc_rec.support_message,
+                "is_admin_solved": is_solved,
+                "created_at": esc_rec.created_at.isoformat() if esc_rec.created_at else None,
+                "resolved_at": esc_rec.resolved_at.isoformat() if esc_rec.resolved_at else None,
+            }
+
+        # 2. Search in negative feedback table
+        stmt_fb = select(NegativeFeedbackRecord).where(
+            (NegativeFeedbackRecord.feedback_id == clean_id)
+            | (NegativeFeedbackRecord.complaint_id == clean_id)
+        )
+        fb_rec = db.scalars(stmt_fb).first()
+        if fb_rec:
+            is_solved = bool(fb_rec.resolved_solution or (fb_rec.status and fb_rec.status.upper() in ["SOLVED", "RESOLVED"]))
+            final_status = "SOLVED" if is_solved else "PENDING"
+            return {
+                "ticketId": fb_rec.feedback_id,
+                "complaint_id": fb_rec.complaint_id or fb_rec.feedback_id,
+                "email": fb_rec.customer_email or "",
+                "complaint": fb_rec.complaint_text,
+                "category": fb_rec.category or "General",
+                "subcategory": fb_rec.subcategory or "General",
+                "status": final_status,
+                "ai_solution": fb_rec.resolved_solution or fb_rec.ai_solution or "",
+                "support_message": fb_rec.resolved_solution,
+                "feedback": fb_rec.feedback_text,
+                "is_admin_solved": is_solved,
+                "created_at": fb_rec.submitted_at.isoformat() if fb_rec.submitted_at else None,
+                "resolved_at": fb_rec.resolved_at.isoformat() if fb_rec.resolved_at else None,
+            }
+
+        # 3. Search in complaints table (AI resolved or initial intake)
+        stmt_cmp = select(ComplaintRecord).where(
+            (ComplaintRecord.complaint_id == clean_id)
+            | (ComplaintRecord.ticket_id == clean_id)
+        )
+        cmp_rec = db.scalars(stmt_cmp).first()
+        if cmp_rec:
+            # Check if there is an associated escalated ticket for this complaint
+            associated_esc = db.scalars(
+                select(EscalatedTicketRecord).where(EscalatedTicketRecord.complaint_id == cmp_rec.complaint_id)
+            ).first()
+
+            if associated_esc:
+                is_solved = bool(associated_esc.support_message or (associated_esc.status and associated_esc.status.upper() in ["SOLVED", "RESOLVED"]))
+                final_status = "SOLVED" if is_solved else "ESCALATED"
+                solution_text = associated_esc.support_message or cmp_rec.ai_solution or ""
+            else:
+                final_status = cmp_rec.status.upper() if cmp_rec.status else "RESOLVED"
+                is_solved = final_status == "SOLVED"
+                solution_text = cmp_rec.ai_solution or ""
+
+            return {
+                "ticketId": cmp_rec.ticket_id or cmp_rec.complaint_id,
+                "complaint_id": cmp_rec.complaint_id,
+                "email": cmp_rec.customer_email or "",
+                "complaint": cmp_rec.complaint_text,
+                "city": cmp_rec.city or "",
+                "state": cmp_rec.state or "",
+                "zip_code": cmp_rec.zip_code or "",
+                "category": cmp_rec.category or "General",
+                "subcategory": cmp_rec.subcategory or "General",
+                "status": final_status,
+                "ai_solution": solution_text,
+                "is_admin_solved": is_solved,
+                "created_at": cmp_rec.created_at.isoformat() if cmp_rec.created_at else None,
+            }
+
+        return None

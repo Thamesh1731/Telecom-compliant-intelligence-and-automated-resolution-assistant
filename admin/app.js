@@ -123,6 +123,9 @@ function updateNegFeedbackBadge() {
   const count = negativeFeedbackItems.filter(i => i.status === 'pending').length || negativeFeedbackItems.length;
   const badge = document.getElementById('nav-neg-feedback-count');
   if (badge) badge.innerText = count;
+
+  const heroNeg = document.getElementById('hero-neg-feedback');
+  if (heroNeg) heroNeg.innerText = count;
 }
 
 /**
@@ -285,6 +288,9 @@ function updateMetricsUI() {
   const badge = document.getElementById('nav-escalated-total');
   if (badge) badge.innerText = totalAssigned;
 
+  const heroActive = document.getElementById('hero-active-escalations');
+  if (heroActive) heroActive.innerText = totalAssigned;
+
   const metricAssigned = document.getElementById('metric-assigned');
   if (metricAssigned) metricAssigned.innerText = totalAssigned;
   const metricEscalated = document.getElementById('metric-escalated');
@@ -416,7 +422,13 @@ function renderAllEscalatedTable() {
 
   const filteredTickets = getFilteredTickets(false);
   if (filteredTickets.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 32px; color: var(--text-muted);">No complaints match the current filters.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="padding: 0;">
+      <div class="empty-state-card">
+        <img src="assets/no-results.png" class="empty-state-img" alt="No Escalations">
+        <div class="empty-state-title">No Active Escalations</div>
+        <div class="empty-state-subtitle">All customer complaints are resolved or autonomously handled by AI triage.</div>
+      </div>
+    </td></tr>`;
     return;
   }
 
@@ -691,7 +703,13 @@ function renderNegativeFeedbackTable() {
   tbody.innerHTML = '';
 
   if (negativeFeedbackItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--text-muted);">No negative feedback items pending. All resolutions accepted by customers!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="padding: 0;">
+      <div class="empty-state-card">
+        <img src="assets/no-results.png" class="empty-state-img" alt="No Feedback Exceptions">
+        <div class="empty-state-title">No Negative Feedback Pending</div>
+        <div class="empty-state-subtitle">100% of customer resolutions are accepted. Zero unresolved exceptions waiting for review.</div>
+      </div>
+    </td></tr>`;
     return;
   }
 
