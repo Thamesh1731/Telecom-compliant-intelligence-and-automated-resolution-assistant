@@ -4,14 +4,7 @@ import ReactMarkdown from "react-markdown";
 import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
 import LottieAnimation from "@/app/components/shared/LottieAnimation";
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" &&
-  window.location.hostname !== "localhost" &&
-  window.location.hostname !== "127.0.0.1"
-    ? "http://54.91.159.187:8000"
-    : "http://localhost:8000");
+import { apiFetch } from "@/utils/apiConfig";
 
 type ResolutionResult = {
   success: boolean;
@@ -81,7 +74,7 @@ export default function ComplaintPage() {
     setShowFeedbackBox(false);
 
     try {
-      const res = await fetch(`${API_URL}/api/complaints`, {
+      const res = await apiFetch("/api/complaints", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ complaint, email, city, state, zipCode, filingOnBehalf }),
@@ -112,7 +105,7 @@ export default function ComplaintPage() {
     setFeedbackState("sending");
 
     try {
-      const res = await fetch(`${API_URL}/api/negative-feedback`, {
+      const res = await apiFetch("/api/negative-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

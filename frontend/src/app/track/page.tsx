@@ -4,14 +4,7 @@ import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { Suspense } from "react";
 import LottieAnimation from "@/app/components/shared/LottieAnimation";
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" &&
-  window.location.hostname !== "localhost" &&
-  window.location.hostname !== "127.0.0.1"
-    ? "http://54.91.159.187:8000"
-    : "http://localhost:8000");
+import { apiFetch } from "@/utils/apiConfig";
 
 type TicketInfo = {
   complaint_id: string;
@@ -51,7 +44,7 @@ function TrackContent() {
     setResult(null);
 
     try {
-      const res = await fetch(`${API_URL}/api/complaints/${encodeURIComponent(cleanId)}`);
+      const res = await apiFetch(`/api/complaints/${encodeURIComponent(cleanId)}`);
       if (res.status === 404) {
         throw new Error(`Ticket "${cleanId}" was not found. Please verify the ID and try again.`);
       }

@@ -104,11 +104,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        origin.strip()
-        for origin in os.getenv("ALLOWED_ORIGINS", "*").split(",")
-        if origin.strip()
-    ],
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -584,6 +580,11 @@ async def get_complaint_by_id(complaint_id: str):
 admin_dir = Path(__file__).parent / "admin"
 if admin_dir.exists():
     app.mount("/admin", StaticFiles(directory=str(admin_dir), html=True), name="admin")
+
+# Mount User Frontend Static Directory (Next.js export out/)
+frontend_out_dir = Path(__file__).parent / "frontend" / "out"
+if frontend_out_dir.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_out_dir), html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
