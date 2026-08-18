@@ -237,7 +237,7 @@ export default function ComplaintPage() {
             {/* Email */}
             <div>
               <label className="block text-sm font-semibold text-[#102D47] mb-2">
-                Email Address <span className="text-slate-400 font-normal text-xs">(optional — for status updates)</span>
+                Email Address
               </label>
               <input
                 type="email"
@@ -283,29 +283,6 @@ export default function ComplaintPage() {
                   placeholder="75001"
                   className="input-field"
                 />
-              </div>
-            </div>
-
-            {/* Filing on behalf */}
-            <div>
-              <label className="block text-sm font-semibold text-[#102D47] mb-3">
-                Filing on behalf of someone else?
-              </label>
-              <div className="flex gap-3">
-                {["No", "Yes"].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => setFilingOnBehalf(opt)}
-                    className={`px-6 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 ${
-                      filingOnBehalf === opt
-                        ? "border-blue-600 bg-blue-50 text-blue-600 shadow-xs"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
               </div>
             </div>
 
