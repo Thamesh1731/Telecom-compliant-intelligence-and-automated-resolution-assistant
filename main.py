@@ -49,6 +49,7 @@ from database import (
     db_save_negative_feedback,
     db_get_negative_feedback,
     db_resolve_negative_feedback,
+    db_get_complaint_by_id,
 )
 
 # Initialize database schema (AWS RDS MySQL / SQLite) on backend launch
@@ -323,6 +324,7 @@ async def process_complaint(request: ComplaintRequest):
     # Persist processed complaint to database
     db_save_complaint(
         complaint_id=complaint_id,
+        ticket_id=ticket_id,
         complaint=complaint_text,
         email=request.email.strip(),
         city=request.city or "",
@@ -550,6 +552,34 @@ def resolve_escalated_ticket(req: ResolveTicketRequest):
                 else "Support message saved, but customer email delivery failed."
             ),
         }
+# Admin Flush / Reset API
+@app.post("/api/admin/flush-tickets")
+def flush_admin_tickets():
+    """Wipe all tickets and negative feedback from memory and database."""
+    global ESCALATED_TICKETS, NEGATIVE_FEEDBACK
+    with RESOLUTION_LOCK:
+        ESCALATED_TICKETS.clear()
+        NEGATIVE_FEEDBACK.clear()
+        try:
+            from clean_database_and_resolver import clean_database
+            clean_database()
+        except Exception as err:
+            print("Flush error:", err)
+    return {"success": True, "message": "All complaints, escalated tickets, and negative feedback flushed."}
+
+
+# Customer Complaint Lookup (for Track My Ticket page)
+@app.get("/api/complaints/{complaint_id}")
+async def get_complaint_by_id(complaint_id: str):
+    """
+    Look up a complaint by its complaint_id (UUID).
+    Returns complaint details, category, AI solution and status.
+    """
+    record = db_get_complaint_by_id(complaint_id)
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Complaint {complaint_id} not found.")
+    return record
+
 # Mount Admin Portal Static Directory
 admin_dir = Path(__file__).parent / "admin"
 if admin_dir.exists():
