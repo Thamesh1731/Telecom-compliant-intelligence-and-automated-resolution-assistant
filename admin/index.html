@@ -100,7 +100,8 @@
 
       <div class="agent-profile-card">
         <div class="avatar" id="sidebar-avatar">
-          <i class="fa-solid fa-user-gear"></i>
+          <img src="assets/avatar_admin.jpg" alt="Admin Avatar" class="avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+          <i class="fa-solid fa-user-gear fallback-avatar" style="display:none;"></i>
           <span class="status-indicator online"></span>
         </div>
         <div class="agent-info">
@@ -160,7 +161,7 @@
           </div>
           <h2 class="analytics-hero-title">Telecom Complaint Intelligence Engine</h2>
           <p class="analytics-hero-desc">
-            Autonomous multi-agent triage with 2-Tier Vector RAG (ChromaDB) and human-in-the-loop exception resolution.
+            Autonomous multi-agent triage indexing domain knowledge and technician-approved solutions via 2-Tier Vector RAG.
           </p>
           <div class="analytics-metrics-row">
             <div class="analytics-stat-pill">
@@ -184,14 +185,21 @@
                 <span class="stat-title">Active Escalations</span>
               </div>
             </div>
+            <div class="analytics-stat-pill">
+              <div class="stat-icon"><i class="fa-solid fa-shield-halved" style="color:#f87171;"></i></div>
+              <div class="stat-meta">
+                <span class="stat-num" id="hero-neg-feedback">0</span>
+                <span class="stat-title">Feedback Exceptions</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="analytics-hero-visual">
           <lottie-player 
-            src="analytics.json" 
+            src="assets/data-analytics.json" 
             background="transparent" 
             speed="1" 
-            style="width: 220px; height: 180px;" 
+            style="width: 240px; height: 190px;" 
             loop 
             autoplay>
           </lottie-player>
