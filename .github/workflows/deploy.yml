@@ -35,6 +35,11 @@ jobs:
         run: |
           cd frontend
           npm run build
+          # Copy admin portal into out directory so BOTH user side and admin side are synced to S3
+          cp -r ../admin out/admin
+          # Compatibility fallback copies for root html routes
+          cp out/complaint/index.html out/complaint.html 2>/dev/null || true
+          cp out/track/index.html out/track.html 2>/dev/null || true
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -70,7 +75,7 @@ jobs:
           script: |
             cd ~/Telecom-compliant-intelligence-and-automated-resolution-assistant
             git fetch origin
-            git pull origin main || git pull origin thamesh-work
+            git reset --hard origin/main || git pull origin main
             source .venv/bin/activate
             pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
             pip install --no-cache-dir -r requirements.txt

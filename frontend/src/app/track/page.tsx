@@ -5,7 +5,13 @@ import ReactMarkdown from "react-markdown";
 import { Suspense } from "react";
 import LottieAnimation from "@/app/components/shared/LottieAnimation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1"
+    ? "http://54.91.159.187:8000"
+    : "http://localhost:8000");
 
 type TicketInfo = {
   complaint_id: string;
