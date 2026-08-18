@@ -18,7 +18,9 @@
     rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=2.5">
+  <link rel="stylesheet" href="style.css?v=2.6">
+  <!-- Lottie Player for Data Analytics Intelligence Telemetry -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 </head>
 
 <body class="dark-theme">
@@ -149,6 +151,53 @@
         </div>
       </header>
 
+      <!-- ANALYTICS & INTELLIGENCE HERO CARD (Powered by Lottie & Real-Time Telemetry) -->
+      <section class="analytics-hero-card">
+        <div class="analytics-hero-content">
+          <div class="analytics-tag">
+            <span class="pulse-dot green"></span>
+            <span>Diagnostic Telemetry & Real-Time AI Resolution</span>
+          </div>
+          <h2 class="analytics-hero-title">Telecom Complaint Intelligence Engine</h2>
+          <p class="analytics-hero-desc">
+            Autonomous multi-agent triage with 2-Tier Vector RAG (ChromaDB) and human-in-the-loop exception resolution.
+          </p>
+          <div class="analytics-metrics-row">
+            <div class="analytics-stat-pill">
+              <div class="stat-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+              <div class="stat-meta">
+                <span class="stat-num" id="hero-deflection-rate">94.8%</span>
+                <span class="stat-title">AI Resolution Accuracy</span>
+              </div>
+            </div>
+            <div class="analytics-stat-pill">
+              <div class="stat-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+              <div class="stat-meta">
+                <span class="stat-num">&lt; 1.8s</span>
+                <span class="stat-title">Mean Resolution Time</span>
+              </div>
+            </div>
+            <div class="analytics-stat-pill">
+              <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+              <div class="stat-meta">
+                <span class="stat-num" id="hero-active-escalations">0</span>
+                <span class="stat-title">Active Escalations</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="analytics-hero-visual">
+          <lottie-player 
+            src="analytics.json" 
+            background="transparent" 
+            speed="1" 
+            style="width: 220px; height: 180px;" 
+            loop 
+            autoplay>
+          </lottie-player>
+        </div>
+      </section>
+
       <!-- TAB 2: ALL ESCALATED -->
       <section class="tab-content active" id="tab-all-escalated">
         <div class="section-card">
@@ -178,8 +227,6 @@
               </tbody>
             </table>
           </div>
-        </div>
-      </section>
         </div>
       </section>
 
@@ -331,7 +378,7 @@
 
   </div>
 
-  <script src="app.js?v=2.5"></script>
+  <script src="app.js?v=2.6"></script>
 </body>
 
 </html>

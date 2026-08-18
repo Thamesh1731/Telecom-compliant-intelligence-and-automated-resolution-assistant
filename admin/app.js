@@ -285,6 +285,9 @@ function updateMetricsUI() {
   const badge = document.getElementById('nav-escalated-total');
   if (badge) badge.innerText = totalAssigned;
 
+  const heroActive = document.getElementById('hero-active-escalations');
+  if (heroActive) heroActive.innerText = totalAssigned;
+
   const metricAssigned = document.getElementById('metric-assigned');
   if (metricAssigned) metricAssigned.innerText = totalAssigned;
   const metricEscalated = document.getElementById('metric-escalated');
